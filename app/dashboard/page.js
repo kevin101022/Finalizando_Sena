@@ -36,8 +36,15 @@ const DashboardAlmacenista = ({ router }) => (
       description="Agregar nuevo bien al sistema"
       onClick={() => router.push('/dashboard/almacenista/registrar')}
     />
-    <ActionCard title="Asignar a Cuentadante" description="Asignar bienes para su cuidado" />
-    <ActionCard title="Inventario Completo" description="Ver todos los bienes registrados" />
+    <ActionCard 
+      title="Asignar a Cuentadante" 
+      description="Asignar bienes para su cuidado" 
+    />
+    <ActionCard 
+      title="Inventario Completo" 
+      description="Ver todos los bienes registrados"
+      onClick={() => router.push('/dashboard/almacenista/inventario')}
+    />
   </div>
 );
 
