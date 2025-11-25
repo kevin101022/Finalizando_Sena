@@ -1,167 +1,274 @@
 -- Base de Datos: Sistema de Gestión de Bienes SENA
--- Motor: MySQL 8.0+
+-- Motor: PostgreSQL
 
-CREATE DATABASE IF NOT EXISTS sena_bienes CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE sena_bienes;
-
--- Tabla: Centros de Formación
-CREATE TABLE centros_formacion (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    nombre VARCHAR(200) NOT NULL,
-    codigo VARCHAR(50) UNIQUE NOT NULL,
-    direccion TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS public.bienes
+(
+    id serial NOT NULL,
+    codigo character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    nombre character varying(200) COLLATE pg_catalog."default" NOT NULL,
+    descripcion text COLLATE pg_catalog."default",
+    categoria character varying(100) COLLATE pg_catalog."default",
+    marca character varying(100) COLLATE pg_catalog."default",
+    modelo character varying(100) COLLATE pg_catalog."default",
+    serial character varying(100) COLLATE pg_catalog."default",
+    valor_compra numeric(15, 2),
+    fecha_compra date,
+    estado estado_bien_enum DEFAULT 'disponible'::estado_bien_enum,
+    cuentadante_id integer,
+    edificio_id integer NOT NULL,
+    centro_formacion_id integer NOT NULL,
+    observaciones text COLLATE pg_catalog."default",
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT bienes_pkey PRIMARY KEY (id),
+    CONSTRAINT bienes_codigo_key UNIQUE (codigo)
 );
 
--- Tabla: Edificios
-CREATE TABLE edificios (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    nombre VARCHAR(200) NOT NULL,
-    codigo VARCHAR(50) UNIQUE NOT NULL,
-    centro_formacion_id INT NOT NULL,
-    direccion TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (centro_formacion_id) REFERENCES centros_formacion(id)
+CREATE TABLE IF NOT EXISTS public.centros_formacion
+(
+    id serial NOT NULL,
+    nombre character varying(200) COLLATE pg_catalog."default" NOT NULL,
+    codigo character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    direccion text COLLATE pg_catalog."default",
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT centros_formacion_pkey PRIMARY KEY (id),
+    CONSTRAINT centros_formacion_codigo_key UNIQUE (codigo)
 );
 
--- Tabla: Usuarios
-CREATE TABLE usuarios (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    nombre VARCHAR(200) NOT NULL,
-    email VARCHAR(200) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    rol ENUM('usuario', 'cuentadante', 'administrador', 'coordinador', 'vigilante', 'almacenista') NOT NULL,
-    centro_formacion_id INT,
-    edificio_id INT,
-    activo BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (centro_formacion_id) REFERENCES centros_formacion(id),
-    FOREIGN KEY (edificio_id) REFERENCES edificios(id)
+CREATE TABLE IF NOT EXISTS public.edificios
+(
+    id serial NOT NULL,
+    nombre character varying(200) COLLATE pg_catalog."default" NOT NULL,
+    codigo character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    centro_formacion_id integer NOT NULL,
+    direccion text COLLATE pg_catalog."default",
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT edificios_pkey PRIMARY KEY (id),
+    CONSTRAINT edificios_codigo_key UNIQUE (codigo)
 );
 
--- Tabla: Bienes
-CREATE TABLE bienes (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    codigo VARCHAR(100) UNIQUE NOT NULL,
-    nombre VARCHAR(200) NOT NULL,
-    descripcion TEXT,
-    categoria VARCHAR(100),
-    marca VARCHAR(100),
-    modelo VARCHAR(100),
-    serial VARCHAR(100),
-    valor_compra DECIMAL(15, 2),
-    fecha_compra DATE,
-    estado ENUM('disponible', 'en_prestamo', 'en_mantenimiento', 'dado_de_baja') DEFAULT 'disponible',
-    cuentadante_id INT,
-    edificio_id INT NOT NULL,
-    centro_formacion_id INT NOT NULL,
-    observaciones TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (cuentadante_id) REFERENCES usuarios(id),
-    FOREIGN KEY (edificio_id) REFERENCES edificios(id),
-    FOREIGN KEY (centro_formacion_id) REFERENCES centros_formacion(id)
+CREATE TABLE IF NOT EXISTS public.historial_movimientos
+(
+    id serial NOT NULL,
+    bien_id integer NOT NULL,
+    solicitud_id integer,
+    tipo_movimiento tipo_movimiento_enum NOT NULL,
+    usuario_responsable_id integer NOT NULL,
+    descripcion text COLLATE pg_catalog."default",
+    fecha_movimiento timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT historial_movimientos_pkey PRIMARY KEY (id)
 );
 
--- Tabla: Solicitudes de Préstamo
-CREATE TABLE solicitudes (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    usuario_id INT NOT NULL,
-    fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_inicio_prestamo DATE NOT NULL,
-    fecha_fin_prestamo DATE NOT NULL,
-    motivo TEXT NOT NULL,
-    
-    -- Estado general
-    estado ENUM('pendiente', 'aprobada', 'rechazada', 'autorizada', 'en_prestamo', 'devuelta') DEFAULT 'pendiente',
-    
-    -- Aprobaciones (3 firmas requeridas)
-    aprobacion_cuentadante BOOLEAN DEFAULT FALSE,
-    cuentadante_id INT,
-    fecha_aprobacion_cuentadante TIMESTAMP NULL,
-    
-    aprobacion_admin BOOLEAN DEFAULT FALSE,
-    admin_id INT,
-    fecha_aprobacion_admin TIMESTAMP NULL,
-    
-    aprobacion_coordinador BOOLEAN DEFAULT FALSE,
-    coordinador_id INT,
-    fecha_aprobacion_coordinador TIMESTAMP NULL,
-    
-    -- Autorización vigilante (solo si tiene 3/3 firmas)
-    autorizado_vigilante BOOLEAN DEFAULT FALSE,
-    vigilante_id INT,
-    fecha_autorizacion TIMESTAMP NULL,
-    
-    -- Devolución
-    fecha_devolucion TIMESTAMP NULL,
-    vigilante_devolucion_id INT,
-    
-    -- Rechazo
-    motivo_rechazo TEXT,
-    rechazado_por INT,
-    fecha_rechazo TIMESTAMP NULL,
-    
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
-    FOREIGN KEY (cuentadante_id) REFERENCES usuarios(id),
-    FOREIGN KEY (admin_id) REFERENCES usuarios(id),
-    FOREIGN KEY (coordinador_id) REFERENCES usuarios(id),
-    FOREIGN KEY (vigilante_id) REFERENCES usuarios(id),
-    FOREIGN KEY (vigilante_devolucion_id) REFERENCES usuarios(id),
-    FOREIGN KEY (rechazado_por) REFERENCES usuarios(id)
+CREATE TABLE IF NOT EXISTS public.reportes
+(
+    id serial NOT NULL,
+    tipo_reporte character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    generado_por integer NOT NULL,
+    fecha_inicio date,
+    fecha_fin date,
+    parametros jsonb,
+    archivo_url character varying(500) COLLATE pg_catalog."default",
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT reportes_pkey PRIMARY KEY (id)
 );
 
--- Tabla: Bienes en Solicitud (relación muchos a muchos)
-CREATE TABLE solicitud_bienes (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    solicitud_id INT NOT NULL,
-    bien_id INT NOT NULL,
-    cantidad INT DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (solicitud_id) REFERENCES solicitudes(id) ON DELETE CASCADE,
-    FOREIGN KEY (bien_id) REFERENCES bienes(id),
-    UNIQUE KEY unique_solicitud_bien (solicitud_id, bien_id)
+CREATE TABLE IF NOT EXISTS public.solicitud_bienes
+(
+    id serial NOT NULL,
+    solicitud_id integer NOT NULL,
+    bien_id integer NOT NULL,
+    cantidad integer DEFAULT 1,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT solicitud_bienes_pkey PRIMARY KEY (id),
+    CONSTRAINT unique_solicitud_bien UNIQUE (solicitud_id, bien_id)
 );
 
--- Tabla: Historial de Movimientos
-CREATE TABLE historial_movimientos (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    bien_id INT NOT NULL,
-    solicitud_id INT,
-    tipo_movimiento ENUM('asignacion', 'prestamo', 'devolucion', 'mantenimiento', 'baja') NOT NULL,
-    usuario_responsable_id INT NOT NULL,
-    descripcion TEXT,
-    fecha_movimiento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (bien_id) REFERENCES bienes(id),
-    FOREIGN KEY (solicitud_id) REFERENCES solicitudes(id),
-    FOREIGN KEY (usuario_responsable_id) REFERENCES usuarios(id)
+CREATE TABLE IF NOT EXISTS public.solicitudes
+(
+    id serial NOT NULL,
+    usuario_id integer NOT NULL,
+    fecha_solicitud timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    fecha_inicio_prestamo date NOT NULL,
+    fecha_fin_prestamo date NOT NULL,
+    motivo text COLLATE pg_catalog."default" NOT NULL,
+    estado estado_solicitud_enum DEFAULT 'pendiente'::estado_solicitud_enum,
+    aprobacion_cuentadante boolean DEFAULT false,
+    cuentadante_id integer,
+    fecha_aprobacion_cuentadante timestamp without time zone,
+    aprobacion_admin boolean DEFAULT false,
+    admin_id integer,
+    fecha_aprobacion_admin timestamp without time zone,
+    aprobacion_coordinador boolean DEFAULT false,
+    coordinador_id integer,
+    fecha_aprobacion_coordinador timestamp without time zone,
+    autorizado_vigilante boolean DEFAULT false,
+    vigilante_id integer,
+    fecha_autorizacion timestamp without time zone,
+    fecha_devolucion timestamp without time zone,
+    vigilante_devolucion_id integer,
+    motivo_rechazo text COLLATE pg_catalog."default",
+    rechazado_por integer,
+    fecha_rechazo timestamp without time zone,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT solicitudes_pkey PRIMARY KEY (id)
 );
 
--- Tabla: Reportes Generados
-CREATE TABLE reportes (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    tipo_reporte VARCHAR(100) NOT NULL,
-    generado_por INT NOT NULL,
-    fecha_inicio DATE,
-    fecha_fin DATE,
-    parametros JSON,
-    archivo_url VARCHAR(500),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (generado_por) REFERENCES usuarios(id)
+CREATE TABLE IF NOT EXISTS public.usuarios
+(
+    id serial NOT NULL,
+    nombre character varying(200) COLLATE pg_catalog."default" NOT NULL,
+    email character varying(200) COLLATE pg_catalog."default" NOT NULL,
+    password character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    rol rol_enum NOT NULL,
+    centro_formacion_id integer,
+    edificio_id integer,
+    activo boolean DEFAULT true,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT usuarios_pkey PRIMARY KEY (id),
+    CONSTRAINT usuarios_email_key UNIQUE (email)
 );
 
--- Índices para mejorar rendimiento
-CREATE INDEX idx_bienes_estado ON bienes(estado);
-CREATE INDEX idx_bienes_cuentadante ON bienes(cuentadante_id);
-CREATE INDEX idx_solicitudes_estado ON solicitudes(estado);
-CREATE INDEX idx_solicitudes_usuario ON solicitudes(usuario_id);
-CREATE INDEX idx_solicitudes_fechas ON solicitudes(fecha_inicio_prestamo, fecha_fin_prestamo);
+ALTER TABLE IF EXISTS public.bienes
+    ADD CONSTRAINT bienes_centro_formacion_id_fkey FOREIGN KEY (centro_formacion_id)
+    REFERENCES public.centros_formacion (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.bienes
+    ADD CONSTRAINT bienes_cuentadante_id_fkey FOREIGN KEY (cuentadante_id)
+    REFERENCES public.usuarios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+CREATE INDEX IF NOT EXISTS idx_bienes_cuentadante
+    ON public.bienes(cuentadante_id);
+
+
+ALTER TABLE IF EXISTS public.bienes
+    ADD CONSTRAINT bienes_edificio_id_fkey FOREIGN KEY (edificio_id)
+    REFERENCES public.edificios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.edificios
+    ADD CONSTRAINT edificios_centro_formacion_id_fkey FOREIGN KEY (centro_formacion_id)
+    REFERENCES public.centros_formacion (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.historial_movimientos
+    ADD CONSTRAINT historial_movimientos_bien_id_fkey FOREIGN KEY (bien_id)
+    REFERENCES public.bienes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.historial_movimientos
+    ADD CONSTRAINT historial_movimientos_solicitud_id_fkey FOREIGN KEY (solicitud_id)
+    REFERENCES public.solicitudes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.historial_movimientos
+    ADD CONSTRAINT historial_movimientos_usuario_responsable_id_fkey FOREIGN KEY (usuario_responsable_id)
+    REFERENCES public.usuarios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.reportes
+    ADD CONSTRAINT reportes_generado_por_fkey FOREIGN KEY (generado_por)
+    REFERENCES public.usuarios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.solicitud_bienes
+    ADD CONSTRAINT solicitud_bienes_bien_id_fkey FOREIGN KEY (bien_id)
+    REFERENCES public.bienes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.solicitud_bienes
+    ADD CONSTRAINT solicitud_bienes_solicitud_id_fkey FOREIGN KEY (solicitud_id)
+    REFERENCES public.solicitudes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.solicitudes
+    ADD CONSTRAINT solicitudes_admin_id_fkey FOREIGN KEY (admin_id)
+    REFERENCES public.usuarios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.solicitudes
+    ADD CONSTRAINT solicitudes_coordinador_id_fkey FOREIGN KEY (coordinador_id)
+    REFERENCES public.usuarios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.solicitudes
+    ADD CONSTRAINT solicitudes_cuentadante_id_fkey FOREIGN KEY (cuentadante_id)
+    REFERENCES public.usuarios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.solicitudes
+    ADD CONSTRAINT solicitudes_rechazado_por_fkey FOREIGN KEY (rechazado_por)
+    REFERENCES public.usuarios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.solicitudes
+    ADD CONSTRAINT solicitudes_usuario_id_fkey FOREIGN KEY (usuario_id)
+    REFERENCES public.usuarios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+CREATE INDEX IF NOT EXISTS idx_solicitudes_usuario
+    ON public.solicitudes(usuario_id);
+
+
+ALTER TABLE IF EXISTS public.solicitudes
+    ADD CONSTRAINT solicitudes_vigilante_devolucion_id_fkey FOREIGN KEY (vigilante_devolucion_id)
+    REFERENCES public.usuarios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.solicitudes
+    ADD CONSTRAINT solicitudes_vigilante_id_fkey FOREIGN KEY (vigilante_id)
+    REFERENCES public.usuarios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.usuarios
+    ADD CONSTRAINT usuarios_centro_formacion_id_fkey FOREIGN KEY (centro_formacion_id)
+    REFERENCES public.centros_formacion (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.usuarios
+    ADD CONSTRAINT usuarios_edificio_id_fkey FOREIGN KEY (edificio_id)
+    REFERENCES public.edificios (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+END;
 
 -- Datos de ejemplo para testing
 
