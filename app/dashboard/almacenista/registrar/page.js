@@ -8,32 +8,25 @@ export default function RegistrarBien() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [edificios, setEdificios] = useState([]);
+  const [centros, setCentros] = useState([]);
+  const [error, setError] = useState('');
 
-  // Estado del formulario
+  // Estado del formulario (campos que coinciden con la BD)
   const [formData, setFormData] = useState({
-    // Centro de Costo
-    sede: '',
-    direccionRegional: '',
-    placa: '',
-
-    // Información Básica
+    codigo: '',
+    nombre: '',
     categoria: '',
     marca: '',
     serial: '',
     modelo: '',
-
-    // Descripción
     descripcion: '',
-
-    // Información Financiera y Temporal
-    costo: '',
-    vidaUtil: '',
-    fechaCompra: '',
-    fechaRegistro: new Date().toISOString().split('T')[0],
-
-    // Novedades y Observaciones
-    estadoBien: 'disponible',
-    observacion: ''
+    valor_compra: '',
+    fecha_compra: '',
+    estado: 'disponible',
+    observaciones: '',
+    edificio_id: '',
+    centro_formacion_id: ''
   });
 
   // Validar autenticación
@@ -43,7 +36,6 @@ export default function RegistrarBien() {
       router.push('/');
     } else {
       const parsedUser = JSON.parse(userData);
-      // Corregido: usar 'rol' en lugar de 'role' para coincidir con la BD
       if (parsedUser.rol !== 'almacenista') {
         router.push('/dashboard');
       }
@@ -51,17 +43,41 @@ export default function RegistrarBien() {
     }
   }, [router]);
 
-  // Generar placa automáticamente cuando cambia la categoría
+  // Cargar edificios y centros desde la API
+  useEffect(() => {
+    const fetchEdificiosyCentros = async () => {
+      try {
+        const response = await fetch('/api/edificios');
+        const data = await response.json();
+        
+        if (data.success) {
+          setEdificios(data.edificios);
+          setCentros(data.centros);
+        } else {
+          setError('Error al cargar edificios y centros');
+        }
+      } catch (err) {
+        console.error('Error al cargar edificios y centros:', err);
+        setError('Error de conexión al cargar datos');
+      }
+    };
+
+    if (user) {
+      fetchEdificiosyCentros();
+    }
+  }, [user]);
+
+  // Generar código automáticamente cuando cambia la categoría
   useEffect(() => {
     if (formData.categoria) {
       const prefijos = {
-        'tecnologia': 'TEC',
-        'audiovisual': 'AUD',
-        'laboratorio': 'LAB',
-        'mobiliario': 'MOB',
-        'herramienta': 'HER',
-        'vehiculo': 'VEH',
-        'otro': 'OTR'
+        'Tecnología': 'TEC',
+        'Audiovisual': 'AUD',
+        'Laboratorio': 'LAB',
+        'Mobiliario': 'MOB',
+        'Herramienta': 'HER',
+        'Vehículo': 'VEH',
+        'Otro': 'OTR'
       };
 
       const prefijo = prefijos[formData.categoria] || 'GEN';
@@ -70,7 +86,7 @@ export default function RegistrarBien() {
 
       setFormData(prev => ({
         ...prev,
-        placa: `${prefijo}-${año}-${consecutivo}`
+        codigo: `${prefijo}-${año}-${consecutivo}`
       }));
     }
   }, [formData.categoria]);
@@ -87,8 +103,9 @@ export default function RegistrarBien() {
   // Validar formulario
   const validateForm = () => {
     const requiredFields = [
-      'sede', 'direccionRegional', 'categoria', 'marca', 'serial',
-      'modelo', 'descripcion', 'costo', 'vidaUtil', 'fechaCompra'
+      'codigo', 'nombre', 'categoria', 'marca', 'serial',
+      'modelo', 'descripcion', 'valor_compra', 'fecha_compra',
+      'edificio_id', 'centro_formacion_id'
     ];
 
     for (const field of requiredFields) {
@@ -98,17 +115,12 @@ export default function RegistrarBien() {
       }
     }
 
-    if (parseFloat(formData.costo) <= 0) {
-      alert('El costo debe ser mayor a 0');
+    if (parseFloat(formData.valor_compra) <= 0) {
+      alert('El valor de compra debe ser mayor a 0');
       return false;
     }
 
-    if (parseInt(formData.vidaUtil) <= 0) {
-      alert('La vida útil debe ser mayor a 0');
-      return false;
-    }
-
-    if (new Date(formData.fechaCompra) > new Date()) {
+    if (new Date(formData.fecha_compra) > new Date()) {
       alert('La fecha de compra no puede ser futura');
       return false;
     }
@@ -125,18 +137,34 @@ export default function RegistrarBien() {
     }
 
     setLoading(true);
+    setError('');
 
-    // Simular guardado (por ahora solo frontend)
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/bienes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setShowSuccess(true);
+        // Redirigir al inventario después de 2 segundos
+        setTimeout(() => {
+          router.push('/dashboard/almacenista/inventario');
+        }, 2000);
+      } else {
+        setError(data.error || 'Error al registrar el bien');
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Error al registrar bien:', err);
+      setError('Error de conexión al registrar el bien');
       setLoading(false);
-      setShowSuccess(true);
-
-      // Resetear formulario después de 2 segundos y redirigir
-      setTimeout(() => {
-        setShowSuccess(false);
-        router.push('/dashboard');
-      }, 2000);
-    }, 1000);
+    }
   };
 
   // Cancelar y volver
@@ -186,8 +214,15 @@ export default function RegistrarBien() {
           <div className="mb-6 bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 flex items-center gap-3">
             <div>
               <p className="font-semibold">¡Bien registrado exitosamente!</p>
-              <p className="text-sm">Redirigiendo al dashboard...</p>
+              <p className="text-sm">Redirigiendo al inventario...</p>
             </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
+            {error}
           </div>
         )}
 
@@ -195,60 +230,82 @@ export default function RegistrarBien() {
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Registro de Nuevo Bien</h2>
 
-          {/* Sección: Centro de Costo */}
+          {/* Sección: Identificación */}
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b-2 border-[#39A900]">
-              Centro de Costo
+              Identificación
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sede / Centro de Formación <span className="text-red-500">*</span>
+                  Código/Placa <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="codigo"
+                  value={formData.codigo}
+                  onChange={handleChange}
+                  required
+                  readOnly
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                  placeholder="Se genera automáticamente"
+                />
+                <p className="text-xs text-gray-500 mt-1">Generado automáticamente según categoría</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre del Bien <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="nombre"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
+                  placeholder="ej: Laptop Dell Latitude"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Centro de Formación <span className="text-red-500">*</span>
                 </label>
                 <select
-                  name="sede"
-                  value={formData.sede}
+                  name="centro_formacion_id"
+                  value={formData.centro_formacion_id}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
                 >
-                  <option value="">Seleccionar sede</option>
-                  <option value="centro_cies">Centro CIES</option>
-                  <option value="centro_cedrum">Centro CEDRUM</option>
+                  <option value="">Seleccionar centro</option>
+                  {centros.map(centro => (
+                    <option key={centro.id} value={centro.id}>
+                      {centro.nombre}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Dirección Regional / Edificio <span className="text-red-500">*</span>
+                  Edificio <span className="text-red-500">*</span>
                 </label>
                 <select
-                  name="direccionRegional"
-                  value={formData.direccionRegional}
+                  name="edificio_id"
+                  value={formData.edificio_id}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
                 >
                   <option value="">Seleccionar edificio</option>
-                  <option value="edificio_principal">Edificio Principal</option>
-                  <option value="edificio_administrativo">Edificio Administrativo</option>
-                  <option value="edificio_talleres">Edificio de Talleres</option>
-                  <option value="edificio_laboratorios">Edificio de Laboratorios</option>
+                  {edificios.map(edificio => (
+                    <option key={edificio.id} value={edificio.id}>
+                      {edificio.nombre}
+                    </option>
+                  ))}
                 </select>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Placa (Generada Automáticamente)
-                </label>
-                <input
-                  type="text"
-                  name="placa"
-                  value={formData.placa}
-                  readOnly
-                  className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed"
-                  placeholder="Se generará automáticamente al seleccionar categoría"
-                />
               </div>
             </div>
           </div>
@@ -271,13 +328,13 @@ export default function RegistrarBien() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
                 >
                   <option value="">Seleccionar categoría</option>
-                  <option value="tecnologia">Tecnología</option>
-                  <option value="audiovisual">Audiovisual</option>
-                  <option value="laboratorio">Laboratorio</option>
-                  <option value="mobiliario">Mobiliario</option>
-                  <option value="herramienta">Herramienta</option>
-                  <option value="vehiculo">Vehículo</option>
-                  <option value="otro">Otro</option>
+                  <option value="Tecnología">Tecnología</option>
+                  <option value="Audiovisual">Audiovisual</option>
+                  <option value="Laboratorio">Laboratorio</option>
+                  <option value="Mobiliario">Mobiliario</option>
+                  <option value="Herramienta">Herramienta</option>
+                  <option value="Vehículo">Vehículo</option>
+                  <option value="Otro">Otro</option>
                 </select>
               </div>
 
@@ -285,24 +342,15 @@ export default function RegistrarBien() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Marca <span className="text-red-500">*</span>
                 </label>
-                <select
+                <input
+                  type="text"
                   name="marca"
                   value={formData.marca}
                   onChange={handleChange}
                   required
+                  placeholder="ej: Dell, HP, Lenovo"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
-                >
-                  <option value="">Seleccionar marca</option>
-                  <option value="dell">Dell</option>
-                  <option value="hp">HP</option>
-                  <option value="lenovo">Lenovo</option>
-                  <option value="epson">Epson</option>
-                  <option value="samsung">Samsung</option>
-                  <option value="lg">LG</option>
-                  <option value="sony">Sony</option>
-                  <option value="generico">Genérico</option>
-                  <option value="otra">Otra</option>
-                </select>
+                />
               </div>
 
               <div>
@@ -315,7 +363,7 @@ export default function RegistrarBien() {
                   value={formData.serial}
                   onChange={handleChange}
                   required
-                  placeholder="Ej: SN123456789"
+                  placeholder="ej: SN123456789"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
                 />
               </div>
@@ -330,7 +378,7 @@ export default function RegistrarBien() {
                   value={formData.modelo}
                   onChange={handleChange}
                   required
-                  placeholder="Ej: Latitude 5420"
+                  placeholder="ej: Latitude 5420"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
                 />
               </div>
@@ -358,41 +406,25 @@ export default function RegistrarBien() {
             </div>
           </div>
 
-          {/* Sección: Información Financiera y Temporal */}
+          {/* Sección: Información Financiera */}
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b-2 border-[#39A900]">
-              Información Financiera y Temporal
+              Información Financiera
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Costo (COP) <span className="text-red-500">*</span>
+                  Valor de Compra (COP) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
-                  name="costo"
-                  value={formData.costo}
+                  name="valor_compra"
+                  value={formData.valor_compra}
                   onChange={handleChange}
                   required
                   min="0"
                   step="0.01"
-                  placeholder="Ej: 2500000"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Vida Útil (años) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="vidaUtil"
-                  value={formData.vidaUtil}
-                  onChange={handleChange}
-                  required
-                  min="1"
-                  placeholder="Ej: 5"
+                  placeholder="ej: 2500000"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
                 />
               </div>
@@ -403,34 +435,21 @@ export default function RegistrarBien() {
                 </label>
                 <input
                   type="date"
-                  name="fechaCompra"
-                  value={formData.fechaCompra}
+                  name="fecha_compra"
+                  value={formData.fecha_compra}
                   onChange={handleChange}
                   required
                   max={new Date().toISOString().split('T')[0]}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha de Registro
-                </label>
-                <input
-                  type="date"
-                  name="fechaRegistro"
-                  value={formData.fechaRegistro}
-                  readOnly
-                  className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed"
-                />
-              </div>
             </div>
           </div>
 
-          {/* Sección: Novedades y Observaciones */}
+          {/* Sección: Estado y Observaciones */}
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b-2 border-[#39A900]">
-              Novedades y Observaciones
+              Estado y Observaciones
             </h3>
             <div className="grid grid-cols-1 gap-6">
               <div>
@@ -438,8 +457,8 @@ export default function RegistrarBien() {
                   Estado del Bien <span className="text-red-500">*</span>
                 </label>
                 <select
-                  name="estadoBien"
-                  value={formData.estadoBien}
+                  name="estado"
+                  value={formData.estado}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
@@ -456,8 +475,8 @@ export default function RegistrarBien() {
                   Observaciones
                 </label>
                 <textarea
-                  name="observacion"
-                  value={formData.observacion}
+                  name="observaciones"
+                  value={formData.observaciones}
                   onChange={handleChange}
                   rows={3}
                   placeholder="Observaciones adicionales (opcional)..."
@@ -467,19 +486,20 @@ export default function RegistrarBien() {
             </div>
           </div>
 
-          {/* Botones de Acción */}
-          <div className="flex gap-4 justify-end pt-6 border-t">
+          {/* Botones */}
+          <div className="flex justify-end gap-4">
             <button
               type="button"
               onClick={handleCancel}
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+              disabled={loading}
             >
               Cancelar
             </button>
             <button
               type="submit"
+              className="px-6 py-2 bg-gradient-to-r from-[#39A900] to-[#007832] text-white rounded-lg hover:opacity-90 transition disabled:opacity-50"
               disabled={loading}
-              className="px-6 py-3 bg-gradient-to-r from-[#39A900] to-[#007832] text-white rounded-lg hover:shadow-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
