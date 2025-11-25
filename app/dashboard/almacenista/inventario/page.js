@@ -13,6 +13,8 @@ export default function InventarioBienes() {
   const [bienes, setBienes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [selectedBien, setSelectedBien] = useState(null);
   const itemsPerPage = 10;
 
   // Validar autenticación
@@ -337,7 +339,13 @@ export default function InventarioBienes() {
                         {formatDate(bien.fecha_compra)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                        <button className="text-[#007832] hover:text-[#39A900]">
+                        <button 
+                          onClick={() => {
+                            setSelectedBien(bien);
+                            setShowModal(true);
+                          }}
+                          className="text-[#007832] hover:text-[#39A900]"
+                        >
                           Ver
                         </button>
                         <button className="text-blue-600 hover:text-blue-900">
@@ -409,6 +417,153 @@ export default function InventarioBienes() {
             </div>
           )}
         </div>
+
+        {/* Modal de Detalles del Bien */}
+        {showModal && selectedBien && (
+          <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Header del Modal */}
+              <div className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white px-6 py-4 flex justify-between items-center sticky top-0">
+                <h3 className="text-xl font-bold">Detalles del Bien</h3>
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setSelectedBien(null);
+                  }}
+                  className="text-white hover:bg-white/20 rounded-full p-2 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Contenido del Modal */}
+              <div className="p-6 space-y-6">
+                {/* Información Principal */}
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-[#39A900]">
+                    Información Principal
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Código/Placa</p>
+                      <p className="font-semibold text-gray-900">{selectedBien.codigo}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Nombre</p>
+                      <p className="font-semibold text-gray-900">{selectedBien.nombre}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Categoría</p>
+                      <p className="font-semibold text-gray-900">{selectedBien.categoria}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Estado</p>
+                      <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(selectedBien.estado)}`}>
+                        {selectedBien.estado}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Especificaciones Técnicas */}
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-[#39A900]">
+                    Especificaciones Técnicas
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Marca</p>
+                      <p className="font-semibold text-gray-900">{selectedBien.marca || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Modelo</p>
+                      <p className="font-semibold text-gray-900">{selectedBien.modelo || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Serial</p>
+                      <p className="font-semibold text-gray-900">{selectedBien.serial || 'N/A'}</p>
+                    </div>
+                  </div>
+                  {selectedBien.descripcion && (
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-600">Descripción</p>
+                      <p className="text-gray-900">{selectedBien.descripcion}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Información Financiera */}
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-[#39A900]">
+                    Información Financiera
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Valor de Compra</p>
+                      <p className="font-semibold text-gray-900 text-lg">
+                        {formatCurrency(Number(selectedBien.valor_compra))}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Fecha de Compra</p>
+                      <p className="font-semibold text-gray-900">{formatDate(selectedBien.fecha_compra)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ubicación y Asignación */}
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-[#39A900]">
+                    Ubicación y Asignación
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Centro de Formación</p>
+                      <p className="font-semibold text-gray-900">{selectedBien.centro_formacion || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Edificio</p>
+                      <p className="font-semibold text-gray-900">{selectedBien.edificio || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Ambiente/Salón</p>
+                      <p className="font-semibold text-gray-900">{selectedBien.ambiente_nombre || 'Sin asignar'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Cuentadante Asignado</p>
+                      <p className="font-semibold text-gray-900">{selectedBien.cuentadante_nombre || 'Sin asignar'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Observaciones */}
+                {selectedBien.observaciones && (
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-[#39A900]">
+                      Observaciones
+                    </h4>
+                    <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">{selectedBien.observaciones}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer del Modal */}
+              <div className="px-6 py-4 bg-gray-50 flex justify-end sticky bottom-0">
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setSelectedBien(null);
+                  }}
+                  className="px-6 py-2 bg-gradient-to-r from-[#39A900] to-[#007832] text-white rounded-lg hover:opacity-90 transition"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
