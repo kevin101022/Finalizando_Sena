@@ -24,11 +24,17 @@ export async function GET(request) {
         b.fecha_compra,
         b.estado,
         b.observaciones,
+        b.cuentadante_id,
+        b.ambiente_id,
         cf.nombre as centro_formacion,
-        e.nombre as edificio
+        e.nombre as edificio,
+        u.nombre as cuentadante_nombre,
+        amb.nombre as ambiente_nombre
       FROM bienes b
       LEFT JOIN centros_formacion cf ON b.centro_formacion_id = cf.id
       LEFT JOIN edificios e ON b.edificio_id = e.id
+      LEFT JOIN usuarios u ON b.cuentadante_id = u.id
+      LEFT JOIN ambientes amb ON b.ambiente_id = amb.id
       WHERE 1=1
     `;
 

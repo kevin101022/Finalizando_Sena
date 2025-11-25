@@ -26,27 +26,67 @@ const DashboardAdministrador = () => (
   </div>
 );
 
-const DashboardAlmacenista = ({ router }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <StatCard title="Bienes Registrados" value="856" color="from-[#39A900] to-[#007832]" />
-    <StatCard title="Sin Asignar" value="23" color="from-orange-500 to-orange-600" />
-    <StatCard title="Cuentadantes Activos" value="12" color="from-blue-500 to-blue-600" />
-    <ActionCard
-      title="Registrar Bien"
-      description="Agregar nuevo bien al sistema"
-      onClick={() => router.push('/dashboard/almacenista/registrar')}
-    />
-    <ActionCard 
-      title="Asignar a Cuentadante" 
-      description="Asignar bienes para su cuidado" 
-    />
-    <ActionCard 
-      title="Inventario Completo" 
-      description="Ver todos los bienes registrados"
-      onClick={() => router.push('/dashboard/almacenista/inventario')}
-    />
-  </div>
-);
+const DashboardAlmacenista = ({ router }) => {
+  const [stats, setStats] = useState({
+    totalBienes: 0,
+    bienesSinAsignar: 0,
+    cuentadantesActivos: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/dashboard/stats');
+        const data = await response.json();
+        if (data.success) {
+          setStats(data.stats);
+        }
+      } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <StatCard 
+        title="Bienes Registrados" 
+        value={loading ? '...' : stats.totalBienes.toString()} 
+        color="from-[#39A900] to-[#007832]" 
+      />
+      <StatCard 
+        title="Sin Asignar" 
+        value={loading ? '...' : stats.bienesSinAsignar.toString()} 
+        color="from-orange-500 to-orange-600" 
+      />
+      <StatCard 
+        title="Cuentadantes Activos" 
+        value={loading ? '...' : stats.cuentadantesActivos.toString()} 
+        color="from-blue-500 to-blue-600" 
+      />
+      <ActionCard
+        title="Registrar Bien"
+        description="Agregar nuevo bien al sistema"
+        onClick={() => router.push('/dashboard/almacenista/registrar')}
+      />
+      <ActionCard 
+        title="Asignar a Cuentadante" 
+        description="Asignar bienes para su cuidado" 
+        onClick={() => router.push('/dashboard/almacenista/asignar-bienes')}
+      />
+      <ActionCard 
+        title="Inventario Completo" 
+        description="Ver todos los bienes registrados"
+        onClick={() => router.push('/dashboard/almacenista/inventario')}
+      />
+    </div>
+  );
+};
 
 const DashboardVigilante = () => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
