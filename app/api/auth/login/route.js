@@ -74,32 +74,69 @@ export async function POST(request) {
       );
     }
 
-    // 5. Generar JWT token
-    const token = generateToken(user);
+    // 5. Obtener el rol principal del usuario desde la tabla roles
+    const rolPrincipalQuery = await query(
+      'SELECT * FROM roles WHERE id = $1',
+      [user.rol_principal_id]
+    );
 
-    // 6. Preparar respuesta (sin enviar la contraseña)
-    // Usamos destructuring para eliminar el campo password
+    if (rolPrincipalQuery.rows.length === 0) {
+      return NextResponse.json(
+        { error: 'Error: Usuario sin rol asignado' },
+        { status: 500 }
+      );
+    }
+
+    const rolPrincipal = rolPrincipalQuery.rows[0];
+
+    // 6. Obtener TODOS los roles del usuario (para ver si tiene múltiples)
+    const todosLosRolesQuery = await query(`
+      SELECT r.*, ur.es_principal 
+      FROM roles r
+      INNER JOIN usuario_roles ur ON r.id = ur.rol_id
+      WHERE ur.usuario_id = $1 AND r.activo = true
+      ORDER BY ur.es_principal DESC
+    `, [user.id]);
+
+    const todosLosRoles = todosLosRolesQuery.rows;
+    
+    // Roles secundarios = todos los roles EXCEPTO el principal
+    const rolesSecundarios = todosLosRoles.filter(r => r.id !== rolPrincipal.id);
+
+    // 7. Generar JWT token (por ahora, con estructura antigua para no romper nada)
+    const token = generateToken({
+      ...user,
+      rol: rolPrincipal.nombre // Agregamos el nombre del rol para compatibilidad
+    });
+
+    // 8. Preparar respuesta (sin enviar la contraseña)
     const { password: _, ...userWithoutPassword } = user;
 
-    // 7. Crear respuesta
+    // 9. Crear respuesta CON información de roles
     const response = NextResponse.json({
       success: true,
-      user: userWithoutPassword,
+      user: {
+        ...userWithoutPassword,
+        rol: rolPrincipal.nombre, // Nombre del rol actual (para compatibilidad)
+        rolActual: rolPrincipal, // Objeto completo del rol actual
+        rolesDisponibles: rolesSecundarios // Roles a los que puede cambiar
+      },
       token
     });
 
-    // 8. Guardar token en una cookie HttpOnly (opcional pero más seguro que localStorage)
-    // HttpOnly = la cookie NO es accesible desde JavaScript del cliente
-    // Esto previene ataques XSS (Cross-Site Scripting)
+    // 10. Guardar token en cookie HttpOnly
     response.cookies.set('token', token, {
-      httpOnly: true, // No accesible desde JavaScript
-      secure: process.env.NODE_ENV === 'production', // Solo HTTPS en producción
-      sameSite: 'lax', // Protección contra CSRF
-      maxAge: 60 * 60 * 24 * 7, // 7 días en segundos
-      path: '/' // Disponible en toda la aplicación
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/'
     });
 
-    console.log('✅ Login exitoso:', user.email, '-', user.rol);
+    console.log('✅ Login exitoso:', user.email, '-', rolPrincipal.nombre);
+    if (rolesSecundarios.length > 0) {
+      console.log('   Roles adicionales:', rolesSecundarios.map(r => r.nombre).join(', '));
+    }
 
     return response;
 

@@ -15,7 +15,7 @@ const DashboardCuentadante = () => (
   </div>
 );
 
-const DashboardAdministrador = () => (
+const DashboardAdministrador = ({ router }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     <StatCard title="Bienes en Mi Edificio" value="234" color="from-[#39A900] to-[#007832]" />
     <StatCard title="Solicitudes Pendientes" value="12" color="from-orange-500 to-orange-600" />
@@ -23,6 +23,11 @@ const DashboardAdministrador = () => (
     <ActionCard title="Revisar Solicitudes" description="Aprobar o rechazar solicitudes de préstamo" />
     <ActionCard title="Bienes del Edificio" description="Ver bienes, entradas y salidas" />
     <ActionCard title="Generar Reportes" description="Reportes de solicitudes y movimientos" />
+    <ActionCard 
+      title="Gestión de Usuarios" 
+      description="Ver usuarios y asignar roles del sistema"
+      onClick={() => router.push('/dashboard/admin/usuarios')}
+    />
   </div>
 );
 
@@ -162,6 +167,31 @@ export default function Dashboard() {
     }
   }, [user, router]);
 
+  // Función para cambiar de rol
+  const handleCambiarRol = async (nuevoRolId) => {
+    try {
+      const response = await fetch('/api/auth/cambiar-rol', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nuevoRolId })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Actualizar localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+        // Recargar página para aplicar cambios
+        window.location.reload();
+      } else {
+        alert(data.error || 'Error al cambiar de rol');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al cambiar de rol');
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('user');
     router.push('/');
@@ -180,7 +210,7 @@ export default function Dashboard() {
       case 'cuentadante':
         return <DashboardCuentadante />;
       case 'administrador':
-        return <DashboardAdministrador />;
+        return <DashboardAdministrador router={router} />;
       case 'almacenista':
         return <DashboardAlmacenista router={router} />;
       case 'vigilante':
@@ -208,6 +238,19 @@ export default function Dashboard() {
               <div className="text-right">
                 <p className="font-semibold">{user.nombre}</p>
                 <p className="text-xs opacity-90 capitalize">{user.rol}</p>
+                {/* Selector de roles si tiene múltiples */}
+                {user.rolesDisponibles && user.rolesDisponibles.length > 0 && (
+                  <select 
+                    onChange={(e) => handleCambiarRol(Number(e.target.value))}
+                    value={user.rolActual?.id || ''}
+                    className="mt-1 text-xs bg-white/50 border border-white/30 rounded px-2 py-1 text-white"
+                  >
+                    <option value={user.rolActual?.id}>{user.rolActual?.nombre || user.rol}</option>
+                    {user.rolesDisponibles.map(rol => (
+                      <option key={rol.id} value={rol.id}>{rol.nombre}</option>
+                    ))}
+                  </select>
+                )}
               </div>
               <button
                 onClick={handleLogout}

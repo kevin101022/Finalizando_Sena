@@ -3,6 +3,7 @@
 ## ✅ ¿Qué se ha implementado?
 
 Se ha creado un backend completo con autenticación usando:
+
 - **PostgreSQL** - Base de datos
 - **bcrypt** - Hasheo seguro de contraseñas
 - **JWT** - Tokens para autenticación sin sesiones
@@ -11,18 +12,22 @@ Se ha creado un backend completo con autenticación usando:
 ## 📁 Archivos Creados
 
 ### Utilidades del Servidor
+
 - `lib/db.js` - Conexión a PostgreSQL con pool
 - `lib/auth.js` - Funciones para bcrypt y JWT
 
 ### API Endpoints
+
 - `app/api/auth/login/route.js` - Login con BD real
 - `app/api/auth/logout/route.js` - Cerrar sesión
 - `app/api/auth/me/route.js` - Obtener usuario actual
 
 ### Protección de Rutas
+
 - `middleware.js` - Verifica autenticación antes de acceder a rutas
 
 ### Scripts
+
 - `scripts/create-test-users.js` - Crea usuarios de prueba en la BD
 
 ---
@@ -68,6 +73,7 @@ npm run create-users
 ```
 
 Deberías ver:
+
 ```
 ✅ Usuario creado: admin@sena.edu.co (ID: 1)
 ✅ Usuario creado: cuentadante@sena.edu.co (ID: 2)
@@ -103,6 +109,7 @@ const match = await comparePassword("admin123", hashDeLaBD);
 ```
 
 **¿Por qué es seguro?**
+
 - Es **irreversible** (no se puede "desencriptar")
 - Incluye un **salt** random (mismo password = diferentes hashes)
 - Es **lento** a propósito (dificulta fuerza bruta)
@@ -121,6 +128,7 @@ abc123XYZ789...
 ```
 
 **¿Cómo funciona?**
+
 1. Usuario hace login
 2. Servidor verifica credenciales
 3. Servidor genera JWT con datos del usuario
@@ -129,6 +137,7 @@ abc123XYZ789...
 6. Servidor verifica el JWT y permite/deniega acceso
 
 **Ventajas:**
+
 - No necesitas guardar sesiones en el servidor
 - Stateless (escalable)
 - Seguro si usas cookies HttpOnly
@@ -187,6 +196,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 ```
 
 Deberías recibir:
+
 ```json
 {
   "success": true,
@@ -201,14 +211,14 @@ Deberías recibir:
 
 Después de ejecutar `npm run create-users`:
 
-| Email | Password | Rol |
-|-------|----------|-----|
-| admin@sena.edu.co | admin123 | administrador |
-| cuentadante@sena.edu.co | cuenta123 | cuentadante |
-| almacenista@sena.edu.co | alma123 | almacenista |
-| vigilante@sena.edu.co | vigi123 | vigilante |
-| usuario@sena.edu.co | user123 | usuario |
-| coordinador@sena.edu.co | coord123 | coordinador |
+| Email                   | Password  | Rol           |
+| ----------------------- | --------- | ------------- |
+| admin@sena.edu.co       | admin123  | administrador |
+| cuentadante@sena.edu.co | cuenta123 | cuentadante   |
+| almacenista@sena.edu.co | alma123   | almacenista   |
+| vigilante@sena.edu.co   | vigi123   | vigilante     |
+| usuario@sena.edu.co     | user123   | usuario       |
+| coordinador@sena.edu.co | coord123  | coordinador   |
 
 ---
 
@@ -217,11 +227,13 @@ Después de ejecutar `npm run create-users`:
 Ahora que tienes autenticación funcional, puedes:
 
 1. **Crear APIs para bienes**
+
    - POST /api/bienes - Crear bien
    - GET /api/bienes - Listar bienes
    - PUT /api/bienes/[id] - Actualizar bien
 
 2. **Proteger rutas por rol**
+
    - Solo almacenistas pueden crear bienes
    - Solo vigilantes pueden autorizar salidas
 
@@ -235,23 +247,30 @@ Ahora que tienes autenticación funcional, puedes:
 ## ❓ Preguntas Frecuentes
 
 ### ¿Dónde se guarda el token?
+
 En una **cookie HttpOnly** (más seguro que localStorage). No es accesible desde JavaScript del cliente.
 
 ### ¿Cuánto dura el token?
+
 7 días por defecto. Configurable en `.env.local` (JWT_EXPIRES_IN).
 
 ### ¿Qué pasa si el token expira?
+
 El middleware lo detecta y redirige al login automáticamente.
 
 ### ¿Cómo accedo a datos del usuario en una API?
+
 El middleware agrega headers con los datos:
+
 ```javascript
-const userId = request.headers.get('x-user-id');
-const userRole = request.headers.get('x-user-role');
+const userId = request.headers.get("x-user-id");
+const userRole = request.headers.get("x-user-role");
 ```
 
 ### ¿Es seguro?
+
 Sí, para desarrollo. En producción debes:
+
 - Cambiar JWT_SECRET por algo más aleatorio
 - Usar HTTPS
 - Agregar rate limiting
@@ -262,30 +281,37 @@ Sí, para desarrollo. En producción debes:
 ## 🐛 Solución de Problemas
 
 ### Error: "Cannot find module 'pg'"
+
 ```bash
 npm install pg bcryptjs jsonwebtoken
 ```
+
 **Nota:** Usamos `bcryptjs` en lugar de `bcrypt` porque es 100% JavaScript y no requiere compilación nativa (evita problemas en Windows).
 
 ### Error: "connect ECONNREFUSED"
+
 - Verifica que PostgreSQL esté corriendo
 - Verifica credenciales en `.env.local`
 - Verifica que la BD `sena_bienes` exista
 
 ### Error: "JWT malformed"
+
 - El token es inválido
 - Cierra sesión y vuelve a iniciar
 
 ### El middleware no funciona
+
 - Reinicia el servidor (Ctrl+C → npm run dev)
 - Verifica que `.env.local` exista
 
 ### Error: "Credenciales incorrectas" aunque la contraseña sea correcta
+
 **Síntoma:** Al intentar iniciar sesión con `admin@sena.edu.co` / `admin123`, aparece error de credenciales incorrectas.
 
 **Causa:** Los hashes de contraseñas en la base de datos no son válidos. Probablemente se crearon con el script SQL inicial que tiene hashes placeholder de solo 29 caracteres en lugar de 60.
 
 **Solución:**
+
 ```bash
 # Actualizar todas las contraseñas con hashes válidos
 npm run fix-passwords
@@ -297,14 +323,17 @@ npm run test-login
 Esto actualizará todas las contraseñas de los usuarios de prueba con hashes válidos de bcrypt.
 
 ### Error: "Cannot read properties of undefined (reading 'modules')" con node-gyp-build
+
 **Síntoma:** Error en el navegador que menciona `node-gyp-build` y problemas con módulos nativos.
 
 **Causa:** El paquete `bcrypt` tiene componentes nativos que necesitan compilación en Windows, lo cual puede fallar.
 
 **Solución:** Ya estamos usando `bcryptjs` que es 100% JavaScript y no requiere compilación. Si ves este error:
+
 1. Verifica que `package.json` tenga `bcryptjs` (no `bcrypt`)
 2. Detén el servidor (Ctrl+C)
 3. Elimina `node_modules` y reinstala:
+
 ```bash
 rm -r node_modules
 npm install

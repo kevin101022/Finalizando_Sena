@@ -93,7 +93,7 @@ export async function POST(request) {
           ) VALUES ($1, $2, $3, $4)`,
           [
             bien_id,
-            'asignacion',
+            'traslado', // Usar 'traslado' (valor válido: prestamo, devolucion, traslado, mantenimiento, baja)
             asignado_por,
             `Asignado a cuentadante ID ${cuentadante_id} en ambiente ID ${ambiente_id}`
           ]
