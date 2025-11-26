@@ -137,27 +137,7 @@ export default function InventarioBienes() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white shadow-lg">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">SENA - Gestión de Bienes</h1>
-              <p className="text-sm opacity-90">Inventario de Bienes</p>
-            </div>
-            <button
-              onClick={handleBack}
-              className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition"
-            >
-              Volver al Dashboard
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
+    <div className="px-6 py-8">
         {/* Título y contador */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Inventario Completo</h2>
@@ -564,7 +544,6 @@ export default function InventarioBienes() {
             </div>
           </div>
         )}
-      </main>
     </div>
   );
 }

@@ -151,51 +151,15 @@ const ActionCard = ({ title, description, onClick }) => (
 
 export default function Dashboard() {
   const router = useRouter();
-  const [user, setUser] = useState(() => {
-    // Inicializar estado desde localStorage
-    if (typeof window !== 'undefined') {
-      const userData = localStorage.getItem('user');
-      return userData ? JSON.parse(userData) : null;
-    }
-    return null;
-  });
+  const [user, setUser] = useState(null);
 
+  // Cargar usuario desde localStorage
   useEffect(() => {
-    // Verificar autenticación
-    if (!user) {
-      router.push('/');
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
     }
-  }, [user, router]);
-
-  // Función para cambiar de rol
-  const handleCambiarRol = async (nuevoRolId) => {
-    try {
-      const response = await fetch('/api/auth/cambiar-rol', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nuevoRolId })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Actualizar localStorage
-        localStorage.setItem('user', JSON.stringify(data.user));
-        // Recargar página para aplicar cambios
-        window.location.reload();
-      } else {
-        alert(data.error || 'Error al cambiar de rol');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error al cambiar de rol');
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    router.push('/');
-  };
+  }, []);
 
   if (!user) {
     return (
@@ -225,55 +189,15 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white shadow-lg">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">SENA - Gestión de Bienes</h1>
-              <p className="text-sm opacity-90">Sistema de Control de Activos</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="font-semibold">{user.nombre}</p>
-                <p className="text-xs opacity-90 capitalize">{user.rol}</p>
-                {/* Selector de roles si tiene múltiples */}
-                {user.rolesDisponibles && user.rolesDisponibles.length > 0 && (
-                  <select 
-                    onChange={(e) => handleCambiarRol(Number(e.target.value))}
-                    value={user.rolActual?.id || ''}
-                    className="mt-1 text-xs bg-white/50 border border-white/30 rounded px-2 py-1 text-white"
-                  >
-                    <option value={user.rolActual?.id}>{user.rolActual?.nombre || user.rol}</option>
-                    {user.rolesDisponibles.map(rol => (
-                      <option key={rol.id} value={rol.id}>{rol.nombre}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition"
-              >
-                Cerrar Sesión
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="px-6 py-8">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">
+          Bienvenido, {user.nombre}
+        </h2>
+        <p className="text-gray-600">Panel de control - {user.rol}</p>
+      </div>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
-            Bienvenido, {user.nombre}
-          </h2>
-          <p className="text-gray-600">Panel de control - {user.rol}</p>
-        </div>
-
-        {renderDashboard()}
-      </main>
+      {renderDashboard()}
     </div>
   );
 }

@@ -118,27 +118,11 @@ export default function GestionUsuarios() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white shadow-lg">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Gestión de Usuarios</h1>
-              <p className="text-sm opacity-90">Asignar roles a usuarios del sistema</p>
-            </div>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition"
-            >
-              ← Volver al Dashboard
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
+    <div className="px-6 py-8">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Gestión de Usuarios</h2>
+        <p className="text-gray-600">Asignar roles a usuarios del sistema</p>
+      </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           {/* Lista de Usuarios */}
@@ -248,7 +232,7 @@ export default function GestionUsuarios() {
           </div>
 
         </div>
-      </main>
+
     </div>
   );
 }
