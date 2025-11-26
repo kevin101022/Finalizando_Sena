@@ -197,27 +197,7 @@ export default function AsignarBienes() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white shadow-lg">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">SENA - Gestión de Bienes</h1>
-              <p className="text-sm opacity-90">Asignar Bienes a Cuentadante</p>
-            </div>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition"
-            >
-              Volver al Dashboard
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-8 max-w-6xl">
+    <div className="px-6 py-8 max-w-6xl mx-auto">
         {/* Success Message */}
         {success && (
           <div className="mb-6 bg-green-50 border border-green-200 text-green-800 rounded-lg p-4">
@@ -556,7 +536,6 @@ export default function AsignarBienes() {
             </div>
           </div>
         </div>
-      </main>
     </div>
   );
 }
