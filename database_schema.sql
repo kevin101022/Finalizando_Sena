@@ -1,6 +1,26 @@
 -- Base de Datos: Sistema de Gestión de Bienes SENA
 -- Motor: PostgreSQL
 
+-- ========================================
+-- DEFINICIÓN DE TIPOS ENUM
+-- ========================================
+
+-- Tipo ENUM para el estado de los bienes
+CREATE TYPE estado_bien_enum AS ENUM ('disponible', 'en_prestamo', 'en_mantenimiento', 'dado_de_baja');
+
+-- Tipo ENUM para el estado de las solicitudes
+CREATE TYPE estado_solicitud_enum AS ENUM ('pendiente', 'aprobada', 'rechazada', 'en_prestamo', 'devuelta');
+
+-- Tipo ENUM para los tipos de movimiento en el historial
+CREATE TYPE tipo_movimiento_enum AS ENUM ('prestamo', 'devolucion', 'traslado', 'mantenimiento', 'baja');
+
+-- Tipo ENUM para los roles de usuario
+CREATE TYPE rol_enum AS ENUM ('administrador', 'cuentadante', 'almacenista', 'vigilante', 'usuario', 'coordinador');
+
+-- ========================================
+-- DEFINICIÓN DE TABLAS
+-- ========================================
+
 CREATE TABLE IF NOT EXISTS public.bienes
 (
     id serial NOT NULL,

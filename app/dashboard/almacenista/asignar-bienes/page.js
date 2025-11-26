@@ -136,8 +136,9 @@ export default function AsignarBienes() {
 
       const data = await response.json();
 
-      if (data.success) {
+      if (response.ok && data.success) {
         setSuccess(true);
+        setError('');
         setTimeout(() => {
           router.push('/dashboard/almacenista/inventario');
         }, 2000);

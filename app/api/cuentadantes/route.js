@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // Obtener lista de usuarios con rol 'cuentadante' activos
+    // Obtener lista de usuarios con rol 'cuentadante' activos (nueva estructura)
     const sqlQuery = `
       SELECT 
         u.id,
@@ -14,9 +14,11 @@ export async function GET() {
         cf.nombre as centro_formacion,
         e.nombre as edificio
       FROM usuarios u
+      INNER JOIN usuario_roles ur ON u.id = ur.usuario_id
+      INNER JOIN roles r ON ur.rol_id = r.id
       LEFT JOIN centros_formacion cf ON u.centro_formacion_id = cf.id
       LEFT JOIN edificios e ON u.edificio_id = e.id
-      WHERE u.rol = 'cuentadante' AND u.activo = true
+      WHERE r.nombre = 'cuentadante' AND u.activo = true
       ORDER BY u.nombre
     `;
 

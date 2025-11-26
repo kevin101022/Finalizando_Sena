@@ -19,11 +19,13 @@ export async function GET() {
     const bienesSinAsignarResult = await query(bienesSinAsignarQuery, []);
     const bienesSinAsignar = parseInt(bienesSinAsignarResult.rows[0].total);
 
-    // Cuentadantes activos
+    // Cuentadantes activos (usando nueva estructura de roles)
     const cuentadantesActivosQuery = `
-      SELECT COUNT(*) as total 
-      FROM usuarios 
-      WHERE rol = 'cuentadante' AND activo = true
+      SELECT COUNT(DISTINCT u.id) as total
+      FROM usuarios u
+      INNER JOIN usuario_roles ur ON u.id = ur.usuario_id
+      INNER JOIN roles r ON ur.rol_id = r.id
+      WHERE r.nombre = 'cuentadante' AND u.activo = true
     `;
     const cuentadantesActivosResult = await query(cuentadantesActivosQuery, []);
     const cuentadantesActivos = parseInt(cuentadantesActivosResult.rows[0].total);
