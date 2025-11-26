@@ -1,11 +1,13 @@
 // Script para crear usuarios de prueba en PostgreSQL con contraseñas hasheadas
+// Ahora compatible con el sistema de múltiples roles
 // 
 // CÓMO EJECUTAR:
 // 1. Asegúrate de tener las dependencias instaladas (npm install)
 // 2. Crea el archivo .env.local con las credenciales de PostgreSQL
-// 3. Ejecuta: node scripts/create-test-users.js
+// 3. Ejecuta: npm run create-users
 //
 // Este script creará todos los usuarios de prueba del archivo CREDENCIALES.md
+// y les asignará su rol principal en las nuevas tablas roles y usuario_roles
 
 import pkg from 'pg';
 const { Pool } = pkg;
@@ -28,37 +30,37 @@ const usuarios = [
         nombre: 'Admin Principal',
         email: 'admin@sena.edu.co',
         password: 'admin123',
-        rol: 'administrador'
+        rolNombre: 'administrador'
     },
     {
         nombre: 'Juan Pérez',
         email: 'cuentadante@sena.edu.co',
         password: 'cuenta123',
-        rol: 'cuentadante'
+        rolNombre: 'cuentadante'
     },
     {
         nombre: 'María García',
         email: 'almacenista@sena.edu.co',
         password: 'alma123',
-        rol: 'almacenista'
+        rolNombre: 'almacenista'
     },
     {
         nombre: 'Carlos López',
         email: 'vigilante@sena.edu.co',
         password: 'vigi123',
-        rol: 'vigilante'
+        rolNombre: 'vigilante'
     },
     {
         nombre: 'Ana Martínez',
         email: 'usuario@sena.edu.co',
         password: 'user123',
-        rol: 'usuario'
+        rolNombre: 'usuario'
     },
     {
         nombre: 'Luis Rodríguez',
         email: 'coordinador@sena.edu.co',
         password: 'coord123',
-        rol: 'coordinador'
+        rolNombre: 'coordinador'
     }
 ];
 
@@ -72,18 +74,41 @@ async function createUsers() {
             // Hashear la contraseña
             const hashedPassword = await bcrypt.hash(user.password, SALT_ROUNDS);
 
-            // Insertar en la base de datos
-            // ON CONFLICT DO NOTHING evita errores si el usuario ya existe
-            const result = await pool.query(
-                `INSERT INTO usuarios (nombre, email, password, rol) 
+            // 1. Obtener el ID del rol desde la tabla roles
+            const rolResult = await pool.query(
+                'SELECT id FROM roles WHERE nombre = $1',
+                [user.rolNombre]
+            );
+
+            if (rolResult.rows.length === 0) {
+                console.log(`❌ Error: Rol "${user.rolNombre}" no existe en la tabla roles`);
+                continue;
+            }
+
+            const rolId = rolResult.rows[0].id;
+
+            // 2. Insertar usuario con rol_principal_id
+            const insertUserResult = await pool.query(
+                `INSERT INTO usuarios (nombre, email, password, rol_principal_id) 
          VALUES ($1, $2, $3, $4) 
          ON CONFLICT (email) DO NOTHING
          RETURNING id`,
-                [user.nombre, user.email, hashedPassword, user.rol]
+                [user.nombre, user.email, hashedPassword, rolId]
             );
 
-            if (result.rows.length > 0) {
-                console.log(`✅ Usuario creado: ${user.email} (ID: ${result.rows[0].id})`);
+            if (insertUserResult.rows.length > 0) {
+                const userId = insertUserResult.rows[0].id;
+                console.log(`✅ Usuario creado: ${user.email} (ID: ${userId})`);
+
+                // 3. Insertar en usuario_roles (rol principal)
+                await pool.query(
+                    `INSERT INTO usuario_roles (usuario_id, rol_id, es_principal) 
+             VALUES ($1, $2, true)
+             ON CONFLICT (usuario_id, rol_id) DO NOTHING`,
+                    [userId, rolId]
+                );
+                
+                console.log(`   ✓ Rol principal asignado: ${user.rolNombre}`);
             } else {
                 console.log(`⚠️  Usuario ya existe: ${user.email}`);
             }
@@ -92,11 +117,12 @@ async function createUsers() {
         console.log('\n🎉 ¡Proceso completado!');
         console.log('\n📋 Usuarios disponibles:');
         usuarios.forEach(u => {
-            console.log(`   ${u.email} - ${u.password} (${u.rol})`);
+            console.log(`   ${u.email} - ${u.password} (${u.rolNombre})`);
         });
 
     } catch (error) {
         console.error('❌ Error al crear usuarios:', error);
+        console.error('Detalles:', error.message);
     } finally {
         // Cerrar el pool
         await pool.end();
