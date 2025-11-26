@@ -61,10 +61,12 @@ export async function GET(request) {
       paramCount++;
     }
 
-    // Agregar filtro de estado
+    // Agregar filtro de estado (case-insensitive para manejar diferentes formatos)
     if (estado) {
-      sqlQuery += ` AND b.estado = $${paramCount}`;
-      params.push(estado);
+      // Convertir espacios a guiones bajos para buscar en BD
+      const estadoBD = estado.toLowerCase().replace(/ /g, '_');
+      sqlQuery += ` AND LOWER(REPLACE(b.estado::text, ' ', '_')) = $${paramCount}`;
+      params.push(estadoBD);
       paramCount++;
     }
 

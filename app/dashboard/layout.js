@@ -10,8 +10,29 @@ import Sidebar from '@/app/components/Sidebar';
  */
 export default function DashboardLayout({ children }) {
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [user, setUser] = useState(null);
+  
+  // Inicializar sidebar según tamaño de pantalla
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Detectar tamaño de pantalla al montar
+  useEffect(() => {
+    const handleResize = () => {
+      // En pantallas grandes (md: 768px), abrir sidebar por defecto
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    // Ejecutar al montar
+    handleResize();
+
+    // Escuchar cambios de tamaño
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Cargar usuario desde localStorage
   useEffect(() => {
@@ -46,11 +67,6 @@ export default function DashboardLayout({ children }) {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    router.push('/');
-  };
-
   // Mostrar loader mientras carga el usuario
   if (!user) {
     return (
@@ -62,19 +78,19 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
+      {/* Header - Responsive */}
       <header className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white shadow-lg">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
               {/* Botón Hamburguesa */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-all"
+                className="p-2 hover:bg-white/10 rounded-lg transition-all flex-shrink-0"
                 aria-label="Toggle sidebar"
               >
                 <svg 
-                  className="w-6 h-6" 
+                  className="w-5 h-5 sm:w-6 sm:h-6" 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -86,21 +102,21 @@ export default function DashboardLayout({ children }) {
                   )}
                 </svg>
               </button>
-              <div>
-                <h1 className="text-2xl font-bold">SENA - Gestión de Bienes</h1>
-                <p className="text-sm opacity-90">Sistema de Control de Activos</p>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl md:text-2xl font-bold truncate">SENA - Gestión de Bienes</h1>
+                <p className="text-xs sm:text-sm opacity-90 hidden sm:block">Sistema de Control de Activos</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <div className="text-right">
-                <p className="font-semibold">{user.nombre}</p>
-                <p className="text-xs opacity-90 capitalize">{user.rol}</p>
+                <p className="text-xs sm:text-sm font-semibold truncate max-w-[120px] sm:max-w-none">{user.nombre}</p>
+                <p className="text-xs opacity-90 capitalize hidden sm:block">{user.rol}</p>
                 {/* Selector de roles si tiene múltiples */}
                 {user.rolesDisponibles && user.rolesDisponibles.length > 0 && (
                   <select 
                     onChange={(e) => handleCambiarRol(Number(e.target.value))}
                     value={user.rolActual?.id || ''}
-                    className="mt-1 text-xs bg-white/50 border border-white/30 rounded px-2 py-1 text-white"
+                    className="mt-1 text-xs bg-white/20 border border-white/30 rounded px-2 py-1 text-white"
                   >
                     <option value={user.rolActual?.id}>{user.rolActual?.nombre || user.rol}</option>
                     {user.rolesDisponibles.map(rol => (
@@ -109,12 +125,6 @@ export default function DashboardLayout({ children }) {
                   </select>
                 )}
               </div>
-              <button
-                onClick={handleLogout}
-                className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition"
-              >
-                Cerrar Sesión
-              </button>
             </div>
           </div>
         </div>

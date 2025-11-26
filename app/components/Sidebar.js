@@ -2,6 +2,19 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  HomeIcon,
+  PackageIcon,
+  UserIcon,
+  ClipboardIcon,
+  FileIcon,
+  UsersIcon,
+  SettingsIcon,
+  ChartIcon,
+  DoorIcon,
+  PlusIcon,
+  HistoryIcon
+} from '../components/Icons';
 
 /**
  * Componente Sidebar Integrado
@@ -16,83 +29,83 @@ import { useRouter } from 'next/navigation';
 export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
   const router = useRouter();
 
-  // Definir menús por rol
+  // Definir menús por rol con íconos SVG
   const menuItems = {
     almacenista: [
       {
         label: 'Registrar Bien',
         path: '/dashboard/almacenista/registrar',
-        icon: '📦'
+        icon: <PlusIcon className="w-6 h-6" />
       },
       {
         label: 'Asignar a Cuentadante',
         path: '/dashboard/almacenista/asignar-bienes',
-        icon: '👤'
+        icon: <UserIcon className="w-6 h-6" />
       },
       {
         label: 'Inventario Completo',
         path: '/dashboard/almacenista/inventario',
-        icon: '📋'
+        icon: <ClipboardIcon className="w-6 h-6" />
       }
     ],
     cuentadante: [
       {
         label: 'Mis Bienes Asignados',
         path: '/dashboard/cuentadante/bienes',
-        icon: '📦'
+        icon: <PackageIcon className="w-6 h-6" />
       },
       {
         label: 'Solicitudes',
         path: '/dashboard/cuentadante/solicitudes',
-        icon: '📝'
+        icon: <FileIcon className="w-6 h-6" />
       }
     ],
     administrador: [
       {
         label: 'Usuarios',
         path: '/dashboard/admin/usuarios',
-        icon: '👥'
+        icon: <UsersIcon className="w-6 h-6" />
       },
       {
         label: 'Configuración',
         path: '/dashboard/admin/config',
-        icon: '⚙️'
+        icon: <SettingsIcon className="w-6 h-6" />
       }
     ],
     coordinador: [
       {
         label: 'Solicitudes',
         path: '/dashboard/coordinador/solicitudes',
-        icon: '📝'
+        icon: <FileIcon className="w-6 h-6" />
       },
       {
         label: 'Reportes',
         path: '/dashboard/coordinador/reportes',
-        icon: '📊'
+        icon: <ChartIcon className="w-6 h-6" />
       }
     ],
     vigilante: [
       {
         label: 'Autorizar Salidas',
         path: '/dashboard/vigilante/salidas',
-        icon: '🚪'
+        icon: <DoorIcon className="w-6 h-6" />
       },
       {
         label: 'Historial',
         path: '/dashboard/vigilante/historial',
-        icon: '📜'
+        icon: <HistoryIcon className="w-6 h-6" />
       }
     ],
     usuario: [
       {
         label: 'Nueva Solicitud',
         path: '/dashboard/usuario/solicitar',
-        icon: '➕'
+        icon: <PlusIcon className="w-6 h-6" />
       },
       {
         label: 'Mis Solicitudes',
         path: '/dashboard/usuario/solicitudes',
-        icon: '📋'
+        icon: <ClipboardIcon className="w-6 h-6" />
       }
     ]
   };
@@ -128,7 +141,7 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
                 onClick={() => router.push('/dashboard')}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition-all text-left group border-b border-white/10 mb-2"
               >
-                <span className="text-2xl">🏠</span>
+                <HomeIcon className="w-6 h-6" />
                 <span className="font-medium group-hover:translate-x-1 transition-transform whitespace-nowrap">
                   Inicio / Dashboard
                 </span>
@@ -141,7 +154,7 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
                   onClick={() => router.push(item.path)}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition-all text-left group"
                 >
-                  <span className="text-2xl">{item.icon}</span>
+                  {item.icon}
                   <span className="font-medium group-hover:translate-x-1 transition-transform whitespace-nowrap">
                     {item.label}
                   </span>
@@ -160,7 +173,7 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
             }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
           >
-            <span className="text-xl">🚪</span>
+            <DoorIcon className="w-6 h-6" />
             <span className="font-medium whitespace-nowrap">Cerrar Sesión</span>
           </button>
         </div>
