@@ -12,28 +12,59 @@ import {
 } from '../components/Icons';
 
 // Componentes de dashboard según rol
-const DashboardCuentadante = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <StatCard 
-      title="Solicitudes Pendientes" 
-      value="8" 
-      color="from-orange-500 to-orange-600"
-      icon={<AlertIcon className="w-10 h-10" />}
-    />
-    <StatCard 
-      title="Bienes Bajo Mi Cuidado" 
-      value="45" 
-      color="from-[#39A900] to-[#007832]"
-      icon={<PackageIcon className="w-10 h-10" />}
-    />
-    <StatCard 
-      title="Aprobadas Este Mes" 
-      value="23" 
-      color="from-[#007832] to-[#39A900]"
-      icon={<CheckCircleIcon className="w-10 h-10" />}
-    />
-  </div>
-);
+const DashboardCuentadante = () => {
+  const [stats, setStats] = useState({
+    bienesACargo: 0,
+    bienesDisponibles: 0,
+    solicitudesPendientes: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!userData.id) return;
+
+        const response = await fetch(`/api/dashboard/stats?rol=cuentadante&usuarioId=${userData.id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setStats(data.stats);
+        }
+      } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <StatCard 
+        title="Bienes Bajo Mi Cuidado" 
+        value={loading ? '...' : stats.bienesACargo.toString()} 
+        color="from-[#39A900] to-[#007832]"
+        icon={<PackageIcon className="w-10 h-10" />}
+      />
+      <StatCard 
+        title="Bienes Disponibles" 
+        value={loading ? '...' : stats.bienesDisponibles.toString()} 
+        color="from-blue-500 to-blue-600"
+        icon={<CheckCircleIcon className="w-10 h-10" />}
+      />
+      <StatCard 
+        title="Solicitudes Pendientes" 
+        value={loading ? '...' : stats.solicitudesPendientes.toString()} 
+        color="from-orange-500 to-orange-600"
+        icon={<AlertIcon className="w-10 h-10" />}
+      />
+    </div>
+  );
+};
 
 const DashboardAdministrador = ({ router }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

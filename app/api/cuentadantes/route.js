@@ -3,41 +3,32 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // Obtener lista de usuarios con rol 'cuentadante' activos (nueva estructura)
+    // Listar cuentadantes que tienen bienes disponibles
     const sqlQuery = `
-      SELECT 
+      SELECT DISTINCT 
         u.id,
         u.nombre,
         u.email,
-        u.centro_formacion_id,
-        u.edificio_id,
-        cf.nombre as centro_formacion,
-        e.nombre as edificio
+        COUNT(b.id) as bienes_disponibles
       FROM usuarios u
-      INNER JOIN usuario_roles ur ON u.id = ur.usuario_id
-      INNER JOIN roles r ON ur.rol_id = r.id
-      LEFT JOIN centros_formacion cf ON u.centro_formacion_id = cf.id
-      LEFT JOIN edificios e ON u.edificio_id = e.id
-      WHERE r.nombre = 'cuentadante' AND u.activo = true
-      ORDER BY u.nombre
+      INNER JOIN bienes b ON b.cuentadante_id = u.id
+      WHERE LOWER(b.estado::text) = 'disponible'
+      GROUP BY u.id, u.nombre, u.email
+      HAVING COUNT(b.id) > 0
+      ORDER BY u.nombre ASC
     `;
 
-    const result = await query(sqlQuery, []);
+    const result = await query(sqlQuery);
 
     return NextResponse.json({
       success: true,
-      cuentadantes: result.rows,
-      total: result.rowCount
+      cuentadantes: result.rows
     });
 
   } catch (error) {
     console.error('Error al obtener cuentadantes:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Error al obtener los cuentadantes',
-        message: error.message 
-      },
+      { success: false, error: 'Error al cargar cuentadantes' },
       { status: 500 }
     );
   }

@@ -113,10 +113,10 @@ export async function POST(request) {
     // Insertar nuevo bien en la base de datos
     const insertQuery = `
       INSERT INTO bienes (
-        codigo, nombre, descripcion, categoria, marca, modelo, serial,
+        codigo, nombre, descripcion, categoria, marca, marca_id, modelo, serial,
         valor_compra, fecha_compra, estado, edificio_id, centro_formacion_id,
         observaciones
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *
     `;
 
@@ -125,7 +125,8 @@ export async function POST(request) {
       body.nombre,
       body.descripcion || null,
       body.categoria || null,
-      body.marca || null,
+      body.marca || null, // Mantener compatibilidad temporal
+      body.marca_id || null, // Nuevo campo FK
       body.modelo || null,
       body.serial || null,
       body.valor_compra || null,

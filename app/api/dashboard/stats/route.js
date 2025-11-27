@@ -1,8 +1,56 @@
 import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const rol = searchParams.get('rol');
+    const usuarioId = searchParams.get('usuarioId');
+
+    // Estadísticas para CUENTADANTE
+    if (rol === 'cuentadante' && usuarioId) {
+      // 1. Bienes a cargo (asignados actualmente)
+      const bienesACargoQuery = `
+        SELECT COUNT(*) as total 
+        FROM bienes 
+        WHERE cuentadante_id = $1
+      `;
+      const bienesACargoResult = await query(bienesACargoQuery, [usuarioId]);
+      const bienesACargo = parseInt(bienesACargoResult.rows[0].total);
+
+      // 2. Bienes disponibles (de los que tiene a cargo)
+      const bienesDisponiblesQuery = `
+        SELECT COUNT(*) as total 
+        FROM bienes 
+        WHERE cuentadante_id = $1 AND estado = 'disponible'
+      `;
+      const bienesDisponiblesResult = await query(bienesDisponiblesQuery, [usuarioId]);
+      const bienesDisponibles = parseInt(bienesDisponiblesResult.rows[0].total);
+
+      // 3. Solicitudes pendientes dirigidas a este cuentadante
+      const solicitudesPendientesQuery = `
+        SELECT COUNT(DISTINCT s.id) as total
+        FROM solicitudes s
+        INNER JOIN detalle_solicitud ds ON ds.solicitud_id = s.id
+        LEFT JOIN firmas_solicitud fs ON fs.solicitud_id = s.id AND fs.rol_firmante = 'cuentadante_responsable'
+        WHERE ds.responsable_id = $1 
+          AND s.estado = 'pendiente'
+          AND fs.id IS NULL
+      `;
+      const solicitudesPendientesResult = await query(solicitudesPendientesQuery, [usuarioId]);
+      const solicitudesPendientes = parseInt(solicitudesPendientesResult.rows[0].total);
+
+      return NextResponse.json({
+        success: true,
+        stats: {
+          bienesACargo,
+          bienesDisponibles,
+          solicitudesPendientes
+        }
+      });
+    }
+
+    // Estadísticas GENERALES (Almacenista/Admin)
     // Total de bienes registrados
     const totalBienesQuery = `
       SELECT COUNT(*) as total FROM bienes

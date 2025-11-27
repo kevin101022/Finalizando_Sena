@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import CreatableSelect from 'react-select/creatable';
 
 export default function RegistrarBien() {
   const router = useRouter();
@@ -10,14 +11,17 @@ export default function RegistrarBien() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [edificios, setEdificios] = useState([]);
   const [centros, setCentros] = useState([]);
+  const [marcas, setMarcas] = useState([]); // Estado para marcas
+  const [isLoadingMarcas, setIsLoadingMarcas] = useState(false); // Loading para marcas
   const [error, setError] = useState('');
 
-  // Estado del formulario (campos que coinciden con la BD)
+  // Estado del formulario
   const [formData, setFormData] = useState({
     codigo: '',
     nombre: '',
     categoria: '',
-    marca: '',
+    marca: '', // Texto para compatibilidad/visualización
+    marca_id: null, // ID de la marca seleccionada
     serial: '',
     modelo: '',
     descripcion: '',
@@ -43,31 +47,46 @@ export default function RegistrarBien() {
     }
   }, [router]);
 
-  // Cargar edificios y centros desde la API
+  // Cargar edificios, centros y MARCAS desde la API
   useEffect(() => {
-    const fetchEdificiosyCentros = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/edificios');
-        const data = await response.json();
+        // Cargar edificios y centros
+        const responseEdificios = await fetch('/api/edificios');
+        const dataEdificios = await responseEdificios.json();
         
-        if (data.success) {
-          setEdificios(data.edificios);
-          setCentros(data.centros);
-        } else {
-          setError('Error al cargar edificios y centros');
+        if (dataEdificios.success) {
+          setEdificios(dataEdificios.edificios);
+          setCentros(dataEdificios.centros);
+        }
+
+        // Cargar marcas
+        setIsLoadingMarcas(true);
+        const responseMarcas = await fetch('/api/marcas');
+        const dataMarcas = await responseMarcas.json();
+
+        if (dataMarcas.success) {
+          // Formatear para react-select
+          const marcasOptions = dataMarcas.marcas.map(m => ({
+            value: m.id,
+            label: m.nombre
+          }));
+          setMarcas(marcasOptions);
         }
       } catch (err) {
-        console.error('Error al cargar edificios y centros:', err);
-        setError('Error de conexión al cargar datos');
+        console.error('Error al cargar datos:', err);
+        setError('Error de conexión al cargar datos auxiliares');
+      } finally {
+        setIsLoadingMarcas(false);
       }
     };
 
     if (user) {
-      fetchEdificiosyCentros();
+      fetchData();
     }
   }, [user]);
 
-  // Generar código automáticamente cuando cambia la categoría
+  // Generar código automáticamente
   useEffect(() => {
     if (formData.categoria) {
       const prefijos = {
@@ -91,13 +110,55 @@ export default function RegistrarBien() {
     }
   }, [formData.categoria]);
 
-  // Manejar cambios en el formulario
+  // Manejar cambios en inputs normales
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  // Manejar cambio en Select de Marca
+  const handleMarcaChange = (newValue) => {
+    setFormData(prev => ({
+      ...prev,
+      marca: newValue ? newValue.label : '',
+      marca_id: newValue ? newValue.value : null
+    }));
+  };
+
+  // Manejar creación de nueva marca
+  const handleCreateMarca = async (inputValue) => {
+    setIsLoadingMarcas(true);
+    try {
+      const response = await fetch('/api/marcas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: inputValue })
+      });
+      
+      const data = await response.json();
+
+      if (data.success) {
+        const newOption = { value: data.marca.id, label: data.marca.nombre };
+        setMarcas(prev => [...prev, newOption]);
+        
+        // Seleccionar la nueva marca automáticamente
+        setFormData(prev => ({
+          ...prev,
+          marca: newOption.label,
+          marca_id: newOption.value
+        }));
+      } else {
+        alert('Error al crear la marca: ' + (data.error || 'Desconocido'));
+      }
+    } catch (err) {
+      console.error('Error creando marca:', err);
+      alert('Error de conexión al crear la marca');
+    } finally {
+      setIsLoadingMarcas(false);
+    }
   };
 
   // Validar formulario
@@ -152,7 +213,6 @@ export default function RegistrarBien() {
 
       if (data.success) {
         setShowSuccess(true);
-        // Redirigir al inventario después de 2 segundos
         setTimeout(() => {
           router.push('/dashboard/almacenista/inventario');
         }, 2000);
@@ -165,18 +225,6 @@ export default function RegistrarBien() {
       setError('Error de conexión al registrar el bien');
       setLoading(false);
     }
-  };
-
-  // Cancelar y volver
-  const handleCancel = () => {
-    if (confirm('¿Estás seguro de cancelar? Se perderán los datos ingresados.')) {
-      router.push('/dashboard');
-    }
-  };
-
-  // Volver al dashboard sin confirmación
-  const handleBack = () => {
-    router.push('/dashboard');
   };
 
   if (!user) {
@@ -193,7 +241,7 @@ export default function RegistrarBien() {
         <h2 className="text-2xl font-bold text-gray-800">Registrar Nuevo Bien</h2>
         <p className="text-gray-600">Complete el formulario para registrar un nuevo activo</p>
       </div>
-        {/* Success Message */}
+        
         {showSuccess && (
           <div className="mb-6 bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 flex items-center gap-3">
             <div>
@@ -203,14 +251,12 @@ export default function RegistrarBien() {
           </div>
         )}
 
-        {/* Error Message */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
             {error}
           </div>
         )}
 
-        {/* Formulario */}
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Registro de Nuevo Bien</h2>
 
@@ -326,15 +372,36 @@ export default function RegistrarBien() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Marca <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="marca"
-                  value={formData.marca}
-                  onChange={handleChange}
-                  required
-                  placeholder="ej: Dell, HP, Lenovo"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
+                <CreatableSelect
+                  isClearable
+                  isDisabled={isLoadingMarcas}
+                  isLoading={isLoadingMarcas}
+                  onChange={handleMarcaChange}
+                  onCreateOption={handleCreateMarca}
+                  options={marcas}
+                  value={formData.marca_id ? { label: formData.marca, value: formData.marca_id } : null}
+                  placeholder="Seleccionar o escribir nueva..."
+                  formatCreateLabel={(inputValue) => `Crear "${inputValue}"`}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      borderColor: '#D1D5DB',
+                      borderRadius: '0.5rem',
+                      padding: '2px',
+                      '&:hover': {
+                        borderColor: '#39A900'
+                      }
+                    }),
+                    option: (base, state) => ({
+                      ...base,
+                      backgroundColor: state.isSelected ? '#39A900' : state.isFocused ? '#E8F5E9' : 'white',
+                      color: state.isSelected ? 'white' : 'black',
+                    })
+                  }}
                 />
+                <p className="text-xs text-gray-500 mt-1">Escribe para buscar o crear una nueva</p>
               </div>
 
               <div>
@@ -474,7 +541,7 @@ export default function RegistrarBien() {
           <div className="flex justify-end gap-4">
             <button
               type="button"
-              onClick={handleCancel}
+              onClick={() => router.push('/dashboard')}
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
               disabled={loading}
             >

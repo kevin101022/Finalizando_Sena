@@ -51,7 +51,7 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
     cuentadante: [
       {
         label: 'Mis Bienes Asignados',
-        path: '/dashboard/cuentadante/bienes',
+        path: '/dashboard/cuentadante/mis-bienes',
         icon: <PackageIcon className="w-6 h-6" />
       },
       {
