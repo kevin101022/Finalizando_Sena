@@ -50,6 +50,48 @@ export async function GET(request) {
       });
     }
 
+    // Estadísticas para USUARIO
+    if (rol === 'usuario' && usuarioId) {
+      // 1. Solicitudes activas (pendientes o en proceso)
+      const solicitudesActivasQuery = `
+        SELECT COUNT(*) as total
+        FROM solicitudes
+        WHERE solicitante_id = $1 
+          AND estado IN ('pendiente', 'en_proceso')
+      `;
+      const solicitudesActivasResult = await query(solicitudesActivasQuery, [usuarioId]);
+      const solicitudesActivas = parseInt(solicitudesActivasResult.rows[0].total);
+
+      // 2. Solicitudes aprobadas
+      const solicitudesAprobadasQuery = `
+        SELECT COUNT(*) as total
+        FROM solicitudes
+        WHERE solicitante_id = $1 
+          AND estado = 'aprobada'
+      `;
+      const solicitudesAprobadasResult = await query(solicitudesAprobadasQuery, [usuarioId]);
+      const solicitudesAprobadas = parseInt(solicitudesAprobadasResult.rows[0].total);
+
+      // 3. Solicitudes rechazadas
+      const solicitudesRechazadasQuery = `
+        SELECT COUNT(*) as total
+        FROM solicitudes
+        WHERE solicitante_id = $1 
+          AND estado = 'rechazada'
+      `;
+      const solicitudesRechazadasResult = await query(solicitudesRechazadasQuery, [usuarioId]);
+      const solicitudesRechazadas = parseInt(solicitudesRechazadasResult.rows[0].total);
+
+      return NextResponse.json({
+        success: true,
+        stats: {
+          solicitudesActivas,
+          solicitudesAprobadas,
+          solicitudesRechazadas
+        }
+      });
+    }
+
     // Estadísticas GENERALES (Almacenista/Admin)
     // Total de bienes registrados
     const totalBienesQuery = `

@@ -162,28 +162,59 @@ const DashboardVigilante = () => (
   </div>
 );
 
-const DashboardUsuario = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <StatCard 
-      title="Solicitudes Activas" 
-      value="3" 
-      color="from-blue-500 to-blue-600"
-      icon={<AlertIcon className="w-10 h-10" />}
-    />
-    <StatCard 
-      title="Aprobadas" 
-      value="5" 
-      color="from-[#007832] to-[#39A900]"
-      icon={<CheckCircleIcon className="w-10 h-10" />}
-    />
-    <StatCard 
-      title="Rechazadas" 
-      value="2" 
-      color="from-red-500 to-red-600"
-      icon={<ClipboardIcon className="w-10 h-10" />}
-    />
-  </div>
-);
+const DashboardUsuario = () => {
+  const [stats, setStats] = useState({
+    solicitudesActivas: 0,
+    solicitudesAprobadas: 0,
+    solicitudesRechazadas: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!userData.id) return;
+
+        const response = await fetch(`/api/dashboard/stats?rol=usuario&usuarioId=${userData.id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setStats(data.stats);
+        }
+      } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <StatCard 
+        title="Solicitudes Activas" 
+        value={loading ? '...' : stats.solicitudesActivas.toString()} 
+        color="from-blue-500 to-blue-600"
+        icon={<AlertIcon className="w-10 h-10" />}
+      />
+      <StatCard 
+        title="Aprobadas" 
+        value={loading ? '...' : stats.solicitudesAprobadas.toString()} 
+        color="from-[#007832] to-[#39A900]"
+        icon={<CheckCircleIcon className="w-10 h-10" />}
+      />
+      <StatCard 
+        title="Rechazadas" 
+        value={loading ? '...' : stats.solicitudesRechazadas.toString()} 
+        color="from-red-500 to-red-600"
+        icon={<ClipboardIcon className="w-10 h-10" />}
+      />
+    </div>
+  );
+};
 
 const DashboardCoordinador = () => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

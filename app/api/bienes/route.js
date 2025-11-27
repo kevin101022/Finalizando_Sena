@@ -3,77 +3,55 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request) {
   try {
-    // Obtener parámetros de búsqueda y filtros desde la URL
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
-    const categoria = searchParams.get('categoria') || '';
-    const estado = searchParams.get('estado') || '';
-
-    // Construir query SQL dinámicamente según los filtros
+    
+    // Query optimizada para la nueva estructura
+    // Obtenemos el estado más reciente y la asignación más reciente mediante subconsultas
     let sqlQuery = `
       SELECT 
         b.id,
-        b.codigo,
-        b.nombre,
+        b.placa,
         b.descripcion,
-        b.categoria,
-        b.marca,
         b.modelo,
         b.serial,
-        b.valor_compra,
+        b.costo,
         b.fecha_compra,
-        b.estado,
-        b.observaciones,
-        b.cuentadante_id,
-        b.ambiente_id,
-        cf.nombre as centro_formacion,
-        e.nombre as edificio,
-        u.nombre as cuentadante_nombre,
-        amb.nombre as ambiente_nombre
+        b.vida_util,
+        m.nombre as marca,
+        COALESCE(
+          (SELECT estado FROM estado_bien WHERE bien_id = b.id ORDER BY fecha_registro DESC LIMIT 1),
+          'desconocido'
+        ) as estado,
+        (
+          SELECT p.nombres || ' ' || p.apellidos 
+          FROM asignaciones a 
+          JOIN persona p ON a.doc_persona = p.documento 
+          WHERE a.bien_id = b.id 
+          ORDER BY a.fecha_asignacion DESC LIMIT 1
+        ) as responsable
       FROM bienes b
-      LEFT JOIN centros_formacion cf ON b.centro_formacion_id = cf.id
-      LEFT JOIN edificios e ON b.edificio_id = e.id
-      LEFT JOIN usuarios u ON b.cuentadante_id = u.id
-      LEFT JOIN ambientes amb ON b.ambiente_id = amb.id
+      LEFT JOIN marcas m ON b.marca_id = m.id
       WHERE 1=1
     `;
 
     const params = [];
     let paramCount = 1;
 
-    // Agregar filtro de búsqueda
     if (search) {
       sqlQuery += ` AND (
-        b.codigo ILIKE $${paramCount} OR 
-        b.nombre ILIKE $${paramCount} OR
-        b.marca ILIKE $${paramCount} OR 
+        b.placa ILIKE $${paramCount} OR 
+        b.descripcion ILIKE $${paramCount} OR
         b.modelo ILIKE $${paramCount} OR
-        b.serial ILIKE $${paramCount}
+        b.serial ILIKE $${paramCount} OR
+        m.nombre ILIKE $${paramCount}
       )`;
       params.push(`%${search}%`);
       paramCount++;
     }
 
-    // Agregar filtro de categoría
-    if (categoria) {
-      sqlQuery += ` AND b.categoria = $${paramCount}`;
-      params.push(categoria);
-      paramCount++;
-    }
+    sqlQuery += ' ORDER BY b.id DESC';
 
-    // Agregar filtro de estado (case-insensitive para manejar diferentes formatos)
-    if (estado) {
-      // Convertir espacios a guiones bajos para buscar en BD
-      const estadoBD = estado.toLowerCase().replace(/ /g, '_');
-      sqlQuery += ` AND LOWER(REPLACE(b.estado::text, ' ', '_')) = $${paramCount}`;
-      params.push(estadoBD);
-      paramCount++;
-    }
-
-    // Ordenar por fecha de creación descendente
-    sqlQuery += ' ORDER BY b.created_at DESC';
-
-    // Ejecutar query
     const result = await query(sqlQuery, params);
 
     return NextResponse.json({
@@ -85,11 +63,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('Error al obtener bienes:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Error al obtener los bienes',
-        message: error.message 
-      },
+      { success: false, error: 'Error al obtener los bienes' },
       { status: 500 }
     );
   }
@@ -100,7 +74,7 @@ export async function POST(request) {
     const body = await request.json();
     
     // Validar campos requeridos
-    const requiredFields = ['codigo', 'nombre', 'edificio_id', 'centro_formacion_id'];
+    const requiredFields = ['placa', 'descripcion', 'marca_id', 'costo'];
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json(
@@ -110,58 +84,64 @@ export async function POST(request) {
       }
     }
 
-    // Insertar nuevo bien en la base de datos
-    const insertQuery = `
-      INSERT INTO bienes (
-        codigo, nombre, descripcion, categoria, marca, marca_id, modelo, serial,
-        valor_compra, fecha_compra, estado, edificio_id, centro_formacion_id,
-        observaciones
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-      RETURNING *
-    `;
+    // Iniciar transacción
+    await query('BEGIN');
 
-    const values = [
-      body.codigo,
-      body.nombre,
-      body.descripcion || null,
-      body.categoria || null,
-      body.marca || null, // Mantener compatibilidad temporal
-      body.marca_id || null, // Nuevo campo FK
-      body.modelo || null,
-      body.serial || null,
-      body.valor_compra || null,
-      body.fecha_compra || null,
-      body.estado || 'disponible',
-      parseInt(body.edificio_id),
-      parseInt(body.centro_formacion_id),
-      body.observaciones || null
-    ];
+    try {
+      // 1. Insertar en bienes
+      const insertBienQuery = `
+        INSERT INTO bienes (
+          placa, descripcion, modelo, marca_id, serial,
+          costo, fecha_compra, vida_util
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *
+      `;
 
-    const result = await query(insertQuery, values);
+      const bienValues = [
+        body.placa,
+        body.descripcion,
+        body.modelo || null,
+        parseInt(body.marca_id),
+        body.serial || null,
+        parseFloat(body.costo),
+        body.fecha_compra || null,
+        body.vida_util ? parseInt(body.vida_util) : null
+      ];
 
-    return NextResponse.json({
-      success: true,
-      bien: result.rows[0],
-      message: 'Bien registrado exitosamente'
-    });
+      const bienResult = await query(insertBienQuery, bienValues);
+      const nuevoBien = bienResult.rows[0];
+
+      // 2. Insertar estado inicial en estado_bien
+      await query(
+        'INSERT INTO estado_bien (bien_id, estado) VALUES ($1, $2)',
+        [nuevoBien.id, 'disponible'] // Estado inicial por defecto
+      );
+
+      await query('COMMIT');
+
+      return NextResponse.json({
+        success: true,
+        bien: nuevoBien,
+        message: 'Bien registrado exitosamente'
+      });
+
+    } catch (err) {
+      await query('ROLLBACK');
+      throw err;
+    }
 
   } catch (error) {
     console.error('Error al registrar bien:', error);
     
-    // Manejar error de código duplicado
-    if (error.code === '23505') {
+    if (error.code === '23505') { // Unique violation
       return NextResponse.json(
-        { success: false, error: 'El código/placa ya existe en el sistema' },
+        { success: false, error: 'La placa ya existe en el sistema' },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Error al registrar el bien',
-        message: error.message 
-      },
+      { success: false, error: 'Error al registrar el bien', details: error.message },
       { status: 500 }
     );
   }

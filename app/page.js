@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function Login() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    email: '',
+    documento: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -88,20 +88,20 @@ export default function Login() {
               </div>
             )}
 
-            {/* Campo de correo */}
+            {/* Campo de documento */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Correo Electrónico
+              <label htmlFor="documento" className="block text-sm font-medium text-gray-700 mb-2">
+                Número de Documento
               </label>
               <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
+                type="text"
+                id="documento"
+                name="documento"
+                value={formData.documento}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent outline-none transition text-gray-900"
-                placeholder="usuario@sena.edu.co"
+                placeholder="Ej: 1234567890"
               />
             </div>
 

@@ -1,16 +1,16 @@
-import { query } from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { query } from "@/lib/db";
+import { NextResponse } from "next/server";
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const usuarioId = searchParams.get('usuarioId');
-    const search = searchParams.get('search') || '';
-    const estado = searchParams.get('estado') || '';
+    const usuarioId = searchParams.get("usuarioId");
+    const search = searchParams.get("search") || "";
+    const estado = searchParams.get("estado") || "";
 
     if (!usuarioId) {
       return NextResponse.json(
-        { success: false, error: 'ID de usuario requerido' },
+        { success: false, error: "ID de usuario requerido" },
         { status: 400 }
       );
     }
@@ -22,7 +22,6 @@ export async function GET(request) {
         b.nombre,
         b.descripcion,
         b.categoria,
-        b.marca,
         m.nombre as marca_nombre,
         b.modelo,
         b.serial,
@@ -57,23 +56,22 @@ export async function GET(request) {
     // Filtro de estado
     if (estado) {
       sqlQuery += ` AND LOWER(REPLACE(b.estado::text, ' ', '_')) = $${paramCount}`;
-      params.push(estado.toLowerCase().replace(/ /g, '_'));
+      params.push(estado.toLowerCase().replace(/ /g, "_"));
       paramCount++;
     }
 
-    sqlQuery += ' ORDER BY b.created_at DESC';
+    sqlQuery += " ORDER BY b.created_at DESC";
 
     const result = await query(sqlQuery, params);
 
     return NextResponse.json({
       success: true,
-      bienes: result.rows
+      bienes: result.rows,
     });
-
   } catch (error) {
-    console.error('Error al obtener mis bienes:', error);
+    console.error("Error al obtener mis bienes:", error);
     return NextResponse.json(
-      { success: false, error: 'Error al cargar los bienes' },
+      { success: false, error: "Error al cargar los bienes" },
       { status: 500 }
     );
   }
