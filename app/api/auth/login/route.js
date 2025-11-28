@@ -8,7 +8,7 @@ import { comparePassword, generateToken } from '@/lib/auth';
  * Endpoint de autenticación - Permite a los usuarios iniciar sesión
  * 
  * FLUJO:
- * 1. Recibe email y password del cliente
+ * 1. Recibe correo y password del cliente
  * 2. Busca el usuario en la base de datos PostgreSQL
  * 3. Verifica la contraseña usando bcrypt
  * 4. Si es correcta, genera un JWT token
@@ -16,14 +16,14 @@ import { comparePassword, generateToken } from '@/lib/auth';
  * 
  * Body esperado:
  * {
- *   "email": "admin@sena.edu.co",
+ *   "correo": "admin@sena.edu.co",
  *   "password": "admin123"
  * }
  * 
  * Respuesta exitosa (200):
  * {
  *   "success": true,
- *   "user": { id, nombre, email, rol, ... },
+ *   "user": { id, nombre, correo, rol, ... },
  *   "token": "eyJhbGciOiJIUzI1NiIs..."
  * }
  * 
@@ -34,21 +34,21 @@ import { comparePassword, generateToken } from '@/lib/auth';
  */
 export async function POST(request) {
   try {
-    // 1. Obtener datos del body (ahora esperamos documento en lugar de email)
-    const { documento, password } = await request.json();
+    // 1. Obtener datos del body
+    const { correo, password } = await request.json();
 
-    // 2. Validar que existan documento y password
-    if (!documento || !password) {
+    // 2. Validar que existan correo y password
+    if (!correo || !password) {
       return NextResponse.json(
-        { error: 'Documento y contraseña son requeridos' },
+        { error: 'Correo y contraseña son requeridos' },
         { status: 400 }
       );
     }
 
-    // 3. Buscar persona en la base de datos
+    // 3. Buscar persona en la base de datos por correo
     const result = await query(
-      'SELECT * FROM persona WHERE documento = $1',
-      [documento]
+      'SELECT * FROM persona WHERE correo = $1',
+      [correo]
     );
 
     // Si no se encontró la persona
@@ -73,11 +73,22 @@ export async function POST(request) {
     }
 
     // 5. Obtener roles de la persona
+    // Ordenar por prioridad: coordinador > administrador > cuentadante > almacenista > vigilante > usuario
     const rolesQuery = await query(`
       SELECT r.id, r.nombre, rp.sede_id
       FROM rol r
       INNER JOIN rol_persona rp ON r.id = rp.rol_id
       WHERE rp.doc_persona = $1
+      ORDER BY 
+        CASE r.nombre
+          WHEN 'coordinador' THEN 1
+          WHEN 'administrador' THEN 2
+          WHEN 'cuentadante' THEN 3
+          WHEN 'almacenista' THEN 4
+          WHEN 'vigilante' THEN 5
+          WHEN 'usuario' THEN 6
+          ELSE 7
+        END ASC
     `, [persona.documento]);
 
     if (rolesQuery.rows.length === 0) {
@@ -87,14 +98,16 @@ export async function POST(request) {
       );
     }
 
-    // Asumimos el primer rol como principal por defecto (o lógica de selección si hubiera)
+    // Asumimos el primer rol como principal por defecto
     const rolPrincipal = rolesQuery.rows[0];
-    const todosLosRoles = rolesQuery.rows;
+    // Roles disponibles son todos EXCEPTO el rol actual
+    const rolesDisponibles = rolesQuery.rows.filter(r => r.id !== rolPrincipal.id);
 
     // 6. Generar JWT token
     const token = generateToken({
       id: persona.documento, // Usamos documento como ID
       documento: persona.documento,
+      correo: persona.correo,
       nombre: `${persona.nombres} ${persona.apellidos}`,
       rol: rolPrincipal.nombre
     });
@@ -109,10 +122,10 @@ export async function POST(request) {
         ...personaWithoutPassword,
         id: persona.documento, // Alias para compatibilidad frontend
         nombre: `${persona.nombres} ${persona.apellidos}`, // Alias para compatibilidad
-        email: 'no-email@sena.edu.co', // Placeholder para compatibilidad
+        correo: persona.correo,
         rol: rolPrincipal.nombre,
         rolActual: rolPrincipal,
-        rolesDisponibles: todosLosRoles
+        rolesDisponibles: rolesDisponibles // Solo roles diferentes al actual
       },
       token
     });

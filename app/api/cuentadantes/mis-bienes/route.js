@@ -6,7 +6,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const usuarioId = searchParams.get("usuarioId");
     const search = searchParams.get("search") || "";
-    const estado = searchParams.get("estado") || "";
+    const estadoFilter = searchParams.get("estado") || "";
 
     if (!usuarioId) {
       return NextResponse.json(
@@ -18,24 +18,29 @@ export async function GET(request) {
     let sqlQuery = `
       SELECT 
         b.id,
-        b.codigo,
-        b.nombre,
+        b.placa as codigo,
+        b.descripcion as nombre,
         b.descripcion,
-        b.categoria,
         m.nombre as marca_nombre,
+        m.nombre as marca,
         b.modelo,
         b.serial,
-        b.estado,
         b.fecha_compra,
-        e.nombre as edificio,
-        cf.nombre as centro_formacion,
-        amb.nombre as ambiente
-      FROM bienes b
+        (SELECT estado FROM estado_bien WHERE bien_id = b.id ORDER BY fecha_registro DESC LIMIT 1) as estado_bien,
+        a.bloqueado,
+        CASE 
+          WHEN a.bloqueado = true THEN 'en_prestamo'
+          ELSE 'disponible'
+        END as estado,
+        amb.nombre as ambiente,
+        s.nombre as sede,
+        a.fecha_asignacion
+      FROM asignaciones a
+      INNER JOIN bienes b ON a.bien_id = b.id
       LEFT JOIN marcas m ON b.marca_id = m.id
-      LEFT JOIN edificios e ON b.edificio_id = e.id
-      LEFT JOIN centros_formacion cf ON b.centro_formacion_id = cf.id
-      LEFT JOIN ambientes amb ON b.ambiente_id = amb.id
-      WHERE b.cuentadante_id = $1
+      LEFT JOIN ambientes amb ON a.ambiente_id = amb.id
+      LEFT JOIN sedes s ON amb.sede_id = s.id
+      WHERE a.doc_persona = $1
     `;
 
     const params = [usuarioId];
@@ -44,8 +49,8 @@ export async function GET(request) {
     // Filtro de búsqueda
     if (search) {
       sqlQuery += ` AND (
-        b.codigo ILIKE $${paramCount} OR 
-        b.nombre ILIKE $${paramCount} OR
+        b.placa ILIKE $${paramCount} OR 
+        b.descripcion ILIKE $${paramCount} OR
         b.modelo ILIKE $${paramCount} OR
         b.serial ILIKE $${paramCount}
       )`;
@@ -54,13 +59,15 @@ export async function GET(request) {
     }
 
     // Filtro de estado
-    if (estado) {
-      sqlQuery += ` AND LOWER(REPLACE(b.estado::text, ' ', '_')) = $${paramCount}`;
-      params.push(estado.toLowerCase().replace(/ /g, "_"));
-      paramCount++;
+    if (estadoFilter) {
+      if (estadoFilter === 'disponible') {
+        sqlQuery += ` AND a.bloqueado = false`;
+      } else if (estadoFilter === 'en_prestamo') {
+        sqlQuery += ` AND a.bloqueado = true`;
+      }
     }
 
-    sqlQuery += " ORDER BY b.created_at DESC";
+    sqlQuery += " ORDER BY a.fecha_asignacion DESC";
 
     const result = await query(sqlQuery, params);
 

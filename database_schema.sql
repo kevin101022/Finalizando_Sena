@@ -47,6 +47,7 @@ CREATE TABLE persona (
     documento VARCHAR(20) PRIMARY KEY,
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
+    correo VARCHAR(100) UNIQUE NOT NULL,
     direccion VARCHAR(200),
     telefono VARCHAR(20),
     tipo_doc VARCHAR(10),
@@ -88,6 +89,7 @@ CREATE TABLE asignaciones (
     bien_id INTEGER REFERENCES bienes(id),
     ambiente_id INTEGER REFERENCES ambientes(id),
     doc_persona VARCHAR(20) REFERENCES persona(documento),
+    bloqueado BOOLEAN DEFAULT false,
     fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

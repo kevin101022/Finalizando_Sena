@@ -43,6 +43,11 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
         icon: <UserIcon className="w-6 h-6" />
       },
       {
+        label: 'Historial de Asignaciones',
+        path: '/dashboard/almacenista/historial-asignaciones',
+        icon: <ClipboardIcon className="w-6 h-6" />
+      },
+      {
         label: 'Inventario Completo',
         path: '/dashboard/almacenista/inventario',
         icon: <ClipboardIcon className="w-6 h-6" />
@@ -62,14 +67,14 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
     ],
     administrador: [
       {
+        label: 'Solicitudes',
+        path: '/dashboard/administrador/solicitudes',
+        icon: <FileIcon className="w-6 h-6" />
+      },
+      {
         label: 'Usuarios',
         path: '/dashboard/admin/usuarios',
         icon: <UsersIcon className="w-6 h-6" />
-      },
-      {
-        label: 'Configuración',
-        path: '/dashboard/admin/config',
-        icon: <SettingsIcon className="w-6 h-6" />
       }
     ],
     coordinador: [
@@ -77,11 +82,6 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
         label: 'Solicitudes',
         path: '/dashboard/coordinador/solicitudes',
         icon: <FileIcon className="w-6 h-6" />
-      },
-      {
-        label: 'Reportes',
-        path: '/dashboard/coordinador/reportes',
-        icon: <ChartIcon className="w-6 h-6" />
       }
     ],
     vigilante: [
@@ -98,7 +98,7 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
     ],
     usuario: [
       {
-        label: 'Nueva Solicitud',
+        label: 'Solicitar Bienes',
         path: '/dashboard/usuario/solicitar',
         icon: <PlusIcon className="w-6 h-6" />
       },

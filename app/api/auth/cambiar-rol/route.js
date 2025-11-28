@@ -41,15 +41,16 @@ export async function POST(request) {
       );
     }
 
-    // 4. Verificar que el usuario TENGA ese rol asignado
+    // 4. Verificar que la persona TENGA ese rol asignado
     const verificacion = await query(`
-      SELECT r.* FROM roles r
-      INNER JOIN usuario_roles ur ON r.id = ur.rol_id
-      WHERE ur.usuario_id = $1 AND r.id = $2 AND r.activo = true
-    `, [decoded.id, nuevoRolId]);
+      SELECT r.id, r.nombre, rp.sede_id
+      FROM rol r
+      INNER JOIN rol_persona rp ON r.id = rp.rol_id
+      WHERE rp.doc_persona = $1 AND r.id = $2
+    `, [decoded.documento, nuevoRolId]);
 
     if (verificacion.rows.length === 0) {
-      console.warn(`⚠️ Usuario ${decoded.id} intentó cambiar a rol ${nuevoRolId} sin permiso`);
+      console.warn(`⚠️ Usuario ${decoded.documento} intentó cambiar a rol ${nuevoRolId} sin permiso`);
       return NextResponse.json(
         { error: 'No tienes permiso para usar ese rol' },
         { status: 403 }
@@ -58,35 +59,38 @@ export async function POST(request) {
 
     const nuevoRol = verificacion.rows[0];
 
-    // 5. Obtener datos del usuario
-    const userResult = await query(
-      'SELECT * FROM usuarios WHERE id = $1 AND activo = true',
-      [decoded.id]
+    // 5. Obtener datos de la persona
+    const personaResult = await query(
+      'SELECT * FROM persona WHERE documento = $1',
+      [decoded.documento]
     );
 
-    if (userResult.rows.length === 0) {
+    if (personaResult.rows.length === 0) {
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
         { status: 404 }
       );
     }
 
-    const user = userResult.rows[0];
-    const { password: _, ...userWithoutPassword } = user;
+    const persona = personaResult.rows[0];
+    const { contraseña: _, ...personaWithoutPassword } = persona;
 
     // 6. Generar nuevo token con el nuevo rol
     const nuevoToken = generateToken({
-      ...user,
+      id: persona.documento,
+      documento: persona.documento,
+      correo: persona.correo,
+      nombre: `${persona.nombres} ${persona.apellidos}`,
       rol: nuevoRol.nombre
     });
 
     // 7. Obtener todos los roles para actualizar rolesDisponibles
     const rolesResult = await query(`
-      SELECT r.* FROM roles r
-      INNER JOIN usuario_roles ur ON r.id = ur.rol_id
-      WHERE ur.usuario_id = $1 AND r.activo = true
-      ORDER BY ur.es_principal DESC
-    `, [decoded.id]);
+      SELECT r.id, r.nombre, rp.sede_id
+      FROM rol r
+      INNER JOIN rol_persona rp ON r.id = rp.rol_id
+      WHERE rp.doc_persona = $1
+    `, [persona.documento]);
 
     const rolesSecundarios = rolesResult.rows.filter(r => r.id !== nuevoRol.id);
 
@@ -94,7 +98,10 @@ export async function POST(request) {
     const response = NextResponse.json({
       success: true,
       user: {
-        ...userWithoutPassword,
+        ...personaWithoutPassword,
+        id: persona.documento,
+        nombre: `${persona.nombres} ${persona.apellidos}`,
+        correo: persona.correo,
         rol: nuevoRol.nombre,
         rolActual: nuevoRol,
         rolesDisponibles: rolesSecundarios
@@ -111,7 +118,7 @@ export async function POST(request) {
       path: '/'
     });
 
-    console.log(`✅ Usuario ${decoded.id} cambió a rol:`, nuevoRol.nombre);
+    console.log(`✅ Usuario ${persona.documento} cambió a rol:`, nuevoRol.nombre);
 
     return response;
 

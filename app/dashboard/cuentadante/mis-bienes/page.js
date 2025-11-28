@@ -147,7 +147,7 @@ export default function MisBienes() {
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">{bien.nombre}</div>
-                          <div className="text-xs text-gray-500">{bien.categoria}</div>
+                          <div className="text-xs text-gray-500">{bien.descripcion}</div>
                         </div>
                       </div>
                     </td>
@@ -156,7 +156,7 @@ export default function MisBienes() {
                       <div className="text-xs text-gray-500">SN: {bien.serial}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{bien.edificio}</div>
+                      <div className="text-sm text-gray-900">{bien.sede || 'N/A'}</div>
                       <div className="text-xs text-gray-500">{bien.ambiente || 'Sin ambiente asignado'}</div>
                     </td>
                     <td className="px-6 py-4">

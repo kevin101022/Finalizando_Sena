@@ -3,109 +3,98 @@
 ## 🔄 Flujo de Solicitud de Préstamo
 
 ```
-1. USUARIO NORMAL
-   ↓ Solicita préstamo de bien(es)
+1. USUARIO
+   ↓ Solicita préstamo de bien(es) asignados a cuentadantes
    
-2. CUENTADANTE (Firma 1/3)
-   ↓ Aprueba/Rechaza
+2. CUENTADANTE
+   ↓ Firma/Rechaza (solo de sus bienes asignados)
    
-3. ADMINISTRADOR DE EDIFICIO (Firma 2/3)
-   ↓ Aprueba/Rechaza
+3. COORDINADOR
+   ↓ Aprueba/Rechaza la solicitud completa
    
-4. COORDINADOR (Firma 3/3)
-   ↓ Aprueba/Rechaza
+4. VIGILANTE
+   ↓ Verifica aprobaciones
+   ↓ Si aprobada → Autoriza salida
+   ↓ Si rechazada → No autoriza
    
-5. VIGILANTE
-   ↓ Verifica las 3 firmas
-   ↓ Si tiene 3/3 → Autoriza salida
-   ↓ Si tiene < 3 → Rechaza automáticamente
-   
-6. USUARIO retira el bien
+5. USUARIO retira el bien
 ```
 
-## 👥 Roles y Responsabilidades Detalladas
+## 👥 Roles y Responsabilidades
 
-### 1. Usuario Normal
+### 1. Usuario
 **Acciones:**
-- ✅ Solicitar préstamo de uno o varios bienes
-- ✅ Ver estado de sus solicitudes (pendiente/aprobada/rechazada)
-- ✅ Reintentar solicitud de bienes rechazados
+- ✅ Solicitar préstamo de bienes
+- ✅ Ver estado de sus solicitudes
 - ✅ Ver historial de préstamos
 
 **Reglas:**
-- Puede volver a solicitar bienes rechazados sin límite
 - Puede solicitar múltiples bienes en una sola solicitud
+- Los bienes deben estar asignados a cuentadantes
 
 ---
 
-### 2. Cuentadante (Primera Firma)
+### 2. Cuentadante
 **Acciones:**
-- ✅ Ver solicitudes de préstamo pendientes
-- ✅ Aprobar o rechazar solicitudes
-- ✅ Ver bienes asignados bajo su cuidado
-- ✅ Generar reportes de solicitudes aprobadas/rechazadas
+- ✅ Ver bienes asignados bajo su responsabilidad
+- ✅ Firmar solicitudes de préstamo de sus bienes
+- ✅ Ver solicitudes pendientes de firma
 
 **Reglas:**
 - Tiene bienes asignados por el almacenista
-- Es responsable del cuidado de esos bienes
-- Su aprobación es la primera de tres necesarias
+- Solo puede firmar solicitudes de sus propios bienes
+- Los bienes asignados NO pueden estar en préstamo (bloqueados)
 
 ---
 
-### 3. Administrador de Edificio (Segunda Firma)
+### 3. Coordinador
 **Acciones:**
-- ✅ Ver bienes que están en su edificio
-- ✅ Ver entradas y salidas de bienes del edificio
-- ✅ Aprobar o rechazar solicitudes de préstamo
-- ✅ Generar reportes de solicitudes y movimientos
-
-**Reglas:**
-- Controla los bienes de su edificio específico
-- Su aprobación es la segunda de tres necesarias
-- Puede ver el historial de movimientos del edificio
-
----
-
-### 4. Coordinador (Tercera Firma)
-**Acciones:**
-- ✅ Ver solicitudes de su dependencia (centro de formación)
-- ✅ Aprobar o rechazar solicitudes
-- ✅ Generar reportes de solicitudes realizadas/aprobadas/rechazadas
-
-**Reglas:**
-- Solo ve solicitudes de su centro de formación
-- Su aprobación es la tercera y última necesaria
-- Puede filtrar por estado de solicitudes
-
----
-
-### 5. Vigilante (Verificador Final)
-**Acciones:**
+- ✅ Aprobar o rechazar solicitudes completas
 - ✅ Ver todas las solicitudes
-- ✅ Verificar que tengan las 3 aprobaciones (firmas)
-- ✅ Autorizar salida del bien SOLO si tiene 3/3 firmas
-- ✅ Rechazar automáticamente si tiene menos de 3 firmas
-- ✅ Ver historial de salidas autorizadas
+- ✅ Generar reportes
 
 **Reglas:**
-- **NO puede aprobar**, solo verifica
-- Si una solicitud tiene 2/3 o menos → Rechazo automático
-- Si una solicitud tiene 3/3 → Puede autorizar salida
-- Registra la hora y fecha de salida del bien
+- Aprueba después de que los cuentadantes firmen
+- Su aprobación es necesaria para que el vigilante autorice
 
 ---
 
-### 6. Almacenista (Gestión de Inventario)
+### 4. Vigilante
 **Acciones:**
-- ✅ Registrar nuevos bienes en el sistema
-- ✅ Asignar bienes a cuentadantes
-- ✅ Ver inventario completo
-- ✅ Gestionar información de bienes
+- ✅ Verificar solicitudes aprobadas
+- ✅ Autorizar salida de bienes
+- ✅ Ver historial de salidas
 
 **Reglas:**
+- Solo autoriza si la solicitud está aprobada por coordinador
+- Verifica que todos los cuentadantes hayan firmado
+
+---
+
+### 5. Almacenista
+**Acciones:**
+- ✅ Registrar nuevos bienes (con placa automática SENA-YYYY-NNNN)
+- ✅ Asignar bienes a cuentadantes y ambientes
+- ✅ Desasignar bienes (solo si NO están en préstamo)
+- ✅ Ver inventario completo
+- ✅ Ver historial de asignaciones
+
+**Reglas:**
+- Las placas se generan automáticamente
+- No puede desasignar bienes que están bloqueados (en préstamo)
 - Es el único que puede registrar bienes nuevos
-- Asigna bienes a cuentadantes para su cuidado
-- No participa en el proceso de aprobación de solicitudes
+
+---
+
+### 6. Administrador
+**Acciones:**
+- ✅ Gestionar usuarios y roles
+- ✅ Configuración del sistema
+- ✅ Acceso completo
+
+**Reglas:**
+- Puede tener múltiples roles (administrador, cuentadante, usuario)
+- Acceso a todas las funcionalidades
 
 ---
 
@@ -113,65 +102,101 @@
 
 | Estado | Descripción |
 |--------|-------------|
-| **Pendiente** | Esperando aprobaciones |
-| **1/3 Aprobada** | Solo cuentadante aprobó |
-| **2/3 Aprobada** | Cuentadante + Admin aprobaron |
-| **3/3 Aprobada** | Todas las firmas completas |
-| **Rechazada** | Alguno de los 3 rechazó |
+| **Pendiente** | Esperando firmas de cuentadantes |
+| **Firmada** | Cuentadantes firmaron, esperando coordinador |
+| **Aprobada** | Coordinador aprobó |
+| **Rechazada** | Coordinador o cuentadante rechazó |
 | **Autorizada** | Vigilante autorizó salida |
-| **En Préstamo** | Bien retirado de la institución |
+| **En Préstamo** | Bien retirado |
 | **Devuelto** | Bien retornado |
 
 ---
 
-## 🗄️ Estructura de Base de Datos Sugerida
+## 🗄️ Estructura de Base de Datos (PostgreSQL)
 
 ### Tablas Principales:
 
-**usuarios**
-- id, nombre, email, password, rol, centro_formacion_id, edificio_id
+**persona**
+- documento (PK), nombres, apellidos, correo, contraseña, direccion, telefono, tipo_doc
+
+**rol**
+- id (PK), nombre
+
+**rol_persona**
+- rol_id (FK), doc_persona (FK), sede_id (FK)
+- Una persona puede tener múltiples roles
 
 **bienes**
-- id, nombre, descripcion, codigo, valor, estado, cuentadante_id, edificio_id
+- id (PK), placa (SENA-YYYY-NNNN), descripcion, modelo, marca_id, serial, fecha_compra, vida_util, costo
+
+**asignaciones**
+- id (PK), bien_id (FK), ambiente_id (FK), doc_persona (FK), bloqueado (bool), fecha_asignacion
+- bloqueado = true cuando el bien está en préstamo
 
 **solicitudes**
-- id, usuario_id, fecha_solicitud, estado
-- aprobacion_cuentadante (bool), fecha_aprobacion_cuentadante
-- aprobacion_admin (bool), fecha_aprobacion_admin
-- aprobacion_coordinador (bool), fecha_aprobacion_coordinador
-- autorizado_vigilante (bool), fecha_autorizacion
-- motivo_rechazo
+- id (PK), fecha_ini_prestamo, fecha_fin_prestamo, doc_persona (FK), destino, motivo, estado, observaciones, sede_id
 
-**solicitud_bienes** (relación muchos a muchos)
-- id, solicitud_id, bien_id, cantidad
+**detalle_solicitud**
+- id (PK), solicitud_id (FK), asignacion_id (FK)
 
-**centros_formacion**
-- id, nombre, coordinador_id
+**firma_solicitud**
+- id (PK), solicitud_id (FK), rol_usuario, doc_persona (FK), firma (bool), observacion, fecha_firmado
 
-**edificios**
-- id, nombre, administrador_id
+**sedes**
+- id (PK), nombre
+
+**ambientes**
+- id (PK), nombre, sede_id (FK)
+
+**marcas**
+- id (PK), nombre, activo
+
+**estado_bien**
+- id (PK), bien_id (FK), estado, fecha_registro
 
 ---
 
 ## 🔐 Validaciones Importantes
 
-1. **Usuario no puede aprobar su propia solicitud**
-2. **Vigilante solo autoriza con 3/3 firmas**
-3. **Si falta 1 firma → Rechazo automático**
-4. **Usuario puede reintentar solicitudes rechazadas**
-5. **Cuentadante solo ve solicitudes de sus bienes**
-6. **Coordinador solo ve solicitudes de su centro**
-7. **Admin solo ve solicitudes de su edificio**
+1. **No se puede desasignar un bien que está bloqueado (en préstamo)**
+2. **Las placas se generan automáticamente con formato SENA-YYYY-NNNN**
+3. **Cuentadante solo firma solicitudes de sus bienes asignados**
+4. **Vigilante solo autoriza solicitudes aprobadas**
+5. **Un bien bloqueado no puede ser asignado a otro cuentadante**
 
 ---
 
-## 🚀 Próximos Pasos de Desarrollo
+## 🎭 Sistema de Roles Múltiples
 
-1. ✅ Login y Dashboard (Completado)
-2. ⏳ Crear base de datos MySQL
-3. ⏳ Implementar CRUD de bienes
-4. ⏳ Sistema de solicitudes con flujo de aprobación
-5. ⏳ Sistema de firmas digitales
-6. ⏳ Generación de reportes PDF
-7. ⏳ Notificaciones por email
-8. ⏳ Historial de movimientos
+Algunas personas pueden tener múltiples roles:
+
+- **Administrador** → puede actuar como cuentadante y usuario
+- **Coordinador** → puede actuar como cuentadante y usuario
+- **Cuentadante** → puede actuar como usuario
+
+El sistema permite cambiar entre roles sin cerrar sesión mediante un selector elegante en el header.
+
+---
+
+## ✅ Funcionalidades Implementadas
+
+1. ✅ Login con correo y contraseña
+2. ✅ Sistema de roles múltiples con selector
+3. ✅ Registro de bienes con placa automática
+4. ✅ Asignación de bienes a cuentadantes
+5. ✅ Desasignación de bienes (con validación de bloqueo)
+6. ✅ Historial de asignaciones
+7. ✅ Inventario completo con filtros
+8. ✅ Dashboard con estadísticas dinámicas
+9. ✅ Sistema de bloqueo de bienes en préstamo
+
+---
+
+## ⏳ Pendientes
+
+1. ⏳ Completar flujo de solicitudes de préstamo
+2. ⏳ Sistema de firmas de cuentadantes
+3. ⏳ Aprobación de coordinador
+4. ⏳ Autorización de vigilante
+5. ⏳ Gestión de devoluciones
+6. ⏳ Reportes y estadísticas avanzadas

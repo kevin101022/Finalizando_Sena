@@ -1,43 +1,43 @@
 import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
+/**
+ * GET /api/bienes/disponibles
+ * 
+ * Obtiene todos los bienes que están asignados a cuentadantes
+ * y NO están bloqueados (disponibles para préstamo)
+ */
 export async function GET() {
   try {
-    // Obtener bienes disponibles (sin cuentadante asignado)
-    const sqlQuery = `
+    const result = await query(`
       SELECT 
-        id,
-        codigo,
-        nombre,
-        descripcion,
-        categoria,
-        marca,
-        modelo,
-        serial,
-        valor_compra,
-        fecha_compra
-      FROM bienes
-      WHERE estado = 'disponible' 
-        AND cuentadante_id IS NULL
-      ORDER BY nombre
-    `;
-
-    const result = await query(sqlQuery, []);
+        a.id as asignacion_id,
+        b.id as bien_id,
+        b.placa,
+        b.descripcion,
+        b.modelo,
+        m.nombre as marca,
+        amb.nombre as ambiente_nombre,
+        p.documento as cuentadante_documento,
+        p.nombres || ' ' || p.apellidos as cuentadante_nombre
+      FROM asignaciones a
+      JOIN bienes b ON a.bien_id = b.id
+      LEFT JOIN marcas m ON b.marca_id = m.id
+      JOIN ambientes amb ON a.ambiente_id = amb.id
+      JOIN persona p ON a.doc_persona = p.documento
+      WHERE a.bloqueado = false
+      ORDER BY b.placa ASC
+    `);
 
     return NextResponse.json({
       success: true,
-      bienes: result.rows,
-      total: result.rowCount
+      bienes: result.rows
     });
 
   } catch (error) {
     console.error('Error al obtener bienes disponibles:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Error al obtener los bienes disponibles',
-        message: error.message 
-      },
+      { success: false, error: 'Error al obtener bienes' },
       { status: 500 }
     );
   }

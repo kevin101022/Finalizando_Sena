@@ -55,12 +55,18 @@ npm run dev
 
 ## 👥 Roles del Sistema
 
-- **Almacenista**: Registra y asigna bienes
+- **Administrador**: Control total del sistema y gestión de usuarios
+- **Almacenista**: Registra y asigna bienes a cuentadantes
 - **Cuentadante**: Aprueba/rechaza solicitudes (1ra firma) y gestiona bienes bajo su cuidado
-- **Administrador**: Gestiona bienes del edificio y aprueba solicitudes (2da firma)
 - **Coordinador**: Aprueba solicitudes de su centro de formación (3ra firma)
-- **Vigilante**: Verifica las 3 firmas y autoriza salidas
+- **Vigilante**: Verifica las 3 firmas y autoriza salidas de bienes
 - **Usuario**: Solicita préstamos de bienes
+
+## 🔐 Credenciales de Prueba
+
+Ver archivo `CREDENCIALES.md` para las credenciales de usuarios de prueba.
+
+**Login:** Ahora se usa **correo + contraseña** (antes era documento + contraseña)
 
 ## 📚 Documentación
 

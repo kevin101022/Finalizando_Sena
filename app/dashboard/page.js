@@ -16,6 +16,7 @@ const DashboardCuentadante = () => {
   const [stats, setStats] = useState({
     bienesACargo: 0,
     bienesDisponibles: 0,
+    bienesEnPrestamo: 0,
     solicitudesPendientes: 0
   });
   const [loading, setLoading] = useState(true);
@@ -24,9 +25,9 @@ const DashboardCuentadante = () => {
     const fetchStats = async () => {
       try {
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        if (!userData.id) return;
+        if (!userData.documento) return;
 
-        const response = await fetch(`/api/dashboard/stats?rol=cuentadante&usuarioId=${userData.id}`);
+        const response = await fetch(`/api/dashboard/stats?rol=cuentadante&documento=${userData.documento}`);
         const data = await response.json();
         
         if (data.success) {
@@ -43,7 +44,7 @@ const DashboardCuentadante = () => {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <StatCard 
         title="Bienes Bajo Mi Cuidado" 
         value={loading ? '...' : stats.bienesACargo.toString()} 
@@ -51,43 +52,76 @@ const DashboardCuentadante = () => {
         icon={<PackageIcon className="w-10 h-10" />}
       />
       <StatCard 
-        title="Bienes Disponibles" 
+        title="Bienes Disponibles para Préstamo" 
         value={loading ? '...' : stats.bienesDisponibles.toString()} 
         color="from-blue-500 to-blue-600"
         icon={<CheckCircleIcon className="w-10 h-10" />}
       />
       <StatCard 
+        title="Bienes En Préstamo" 
+        value={loading ? '...' : stats.bienesEnPrestamo.toString()} 
+        color="from-purple-500 to-purple-600"
+        icon={<AlertIcon className="w-10 h-10" />}
+      />
+      <StatCard 
         title="Solicitudes Pendientes" 
         value={loading ? '...' : stats.solicitudesPendientes.toString()} 
         color="from-orange-500 to-orange-600"
-        icon={<AlertIcon className="w-10 h-10" />}
+        icon={<ClipboardIcon className="w-10 h-10" />}
       />
     </div>
   );
 };
 
-const DashboardAdministrador = ({ router }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <StatCard 
-      title="Bienes en Mi Edificio" 
-      value="234" 
-      color="from-[#39A900] to-[#007832]"
-      icon={<PackageIcon className="w-10 h-10" />}
-    />
-    <StatCard 
-      title="Solicitudes Pendientes" 
-      value="12" 
-      color="from-orange-500 to-orange-600"
-      icon={<AlertIcon className="w-10 h-10" />}
-    />
-    <StatCard 
-      title="Movimientos Hoy" 
-      value="8" 
-      color="from-purple-500 to-purple-600"
-      icon={<TrendingUpIcon className="w-10 h-10" />}
-    />
-  </div>
-);
+const DashboardAdministrador = () => {
+  const [stats, setStats] = useState({
+    solicitudesPendientes: 0,
+    solicitudesAprobadas: 0,
+    totalSolicitudes: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/dashboard/stats?rol=administrador');
+        const data = await response.json();
+        if (data.success) {
+          setStats(data.stats);
+        }
+      } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <StatCard 
+        title="Total Solicitudes" 
+        value={loading ? '...' : stats.totalSolicitudes.toString()} 
+        color="from-[#39A900] to-[#007832]"
+        icon={<ClipboardIcon className="w-10 h-10" />}
+      />
+      <StatCard 
+        title="Pendientes de Firmar" 
+        value={loading ? '...' : stats.solicitudesPendientes.toString()} 
+        color="from-orange-500 to-orange-600"
+        icon={<AlertIcon className="w-10 h-10" />}
+      />
+      <StatCard 
+        title="Aprobadas" 
+        value={loading ? '...' : stats.solicitudesAprobadas.toString()} 
+        color="from-purple-500 to-purple-600"
+        icon={<CheckCircleIcon className="w-10 h-10" />}
+      />
+    </div>
+  );
+};
 
 const DashboardAlmacenista = ({ router }) => {
   const [stats, setStats] = useState({
@@ -174,9 +208,9 @@ const DashboardUsuario = () => {
     const fetchStats = async () => {
       try {
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        if (!userData.id) return;
+        if (!userData.documento) return;
 
-        const response = await fetch(`/api/dashboard/stats?rol=usuario&usuarioId=${userData.id}`);
+        const response = await fetch(`/api/dashboard/stats?rol=usuario&documento=${userData.documento}`);
         const data = await response.json();
         
         if (data.success) {
@@ -216,28 +250,55 @@ const DashboardUsuario = () => {
   );
 };
 
-const DashboardCoordinador = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <StatCard 
-      title="Solicitudes Mi Dependencia" 
-      value="15" 
-      color="from-[#39A900] to-[#007832]"
-      icon={<ClipboardIcon className="w-10 h-10" />}
-    />
-    <StatCard 
-      title="Aprobadas Este Mes" 
-      value="34" 
-      color="from-[#007832] to-[#39A900]"
-      icon={<CheckCircleIcon className="w-10 h-10" />}
-    />
-    <StatCard 
-      title="Rechazadas" 
-      value="7" 
-      color="from-red-500 to-red-600"
-      icon={<AlertIcon className="w-10 h-10" />}
-    />
-  </div>
-);
+const DashboardCoordinador = () => {
+  const [stats, setStats] = useState({
+    solicitudesPendientes: 0,
+    solicitudesAprobadas: 0,
+    solicitudesRechazadas: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/dashboard/stats?rol=coordinador');
+        const data = await response.json();
+        if (data.success) {
+          setStats(data.stats);
+        }
+      } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <StatCard 
+        title="Pendientes de Firmar" 
+        value={loading ? '...' : stats.solicitudesPendientes.toString()} 
+        color="from-orange-500 to-orange-600"
+        icon={<AlertIcon className="w-10 h-10" />}
+      />
+      <StatCard 
+        title="Aprobadas" 
+        value={loading ? '...' : stats.solicitudesAprobadas.toString()} 
+        color="from-[#007832] to-[#39A900]"
+        icon={<CheckCircleIcon className="w-10 h-10" />}
+      />
+      <StatCard 
+        title="Rechazadas" 
+        value={loading ? '...' : stats.solicitudesRechazadas.toString()} 
+        color="from-red-500 to-red-600"
+        icon={<ClipboardIcon className="w-10 h-10" />}
+      />
+    </div>
+  );
+};
 
 // Componente de tarjeta de estadística con ícono
 const StatCard = ({ title, value, color, icon }) => (

@@ -20,7 +20,6 @@ export default function AsignarBienes() {
   const [cuentadanteSeleccionado, setCuentadanteSeleccionado] = useState(null);
   const [ambienteSeleccionado, setAmbienteSeleccionado] = useState(null);
   const [bienesSeleccionados, setBienesSeleccionados] = useState([]);
-  const [observaciones, setObservaciones] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Validar autenticación
@@ -44,19 +43,13 @@ export default function AsignarBienes() {
     }
   }, [user]);
 
-  // Cargar ambientes cuando se selecciona un cuentadante
+  // Cargar ambientes al montar (junto con cuentadantes)
   useEffect(() => {
-    if (cuentadanteSeleccionado) {
+    if (user) {
       fetchAmbientes();
-    }
-  }, [cuentadanteSeleccionado]);
-
-  // Cargar bienes disponibles cuando se selecciona un ambiente
-  useEffect(() => {
-    if (ambienteSeleccionado) {
       fetchBienesDisponibles();
     }
-  }, [ambienteSeleccionado]);
+  }, [user]);
 
   const fetchCuentadantes = async () => {
     try {
@@ -88,7 +81,7 @@ export default function AsignarBienes() {
 
   const fetchBienesDisponibles = async () => {
     try {
-      const response = await fetch('/api/bienes/disponibles');
+      const response = await fetch('/api/bienes/sin-asignar');
       const data = await response.json();
       if (data.success) {
         setBienesDisponibles(data.bienes);
@@ -128,9 +121,7 @@ export default function AsignarBienes() {
         body: JSON.stringify({
           cuentadante_id: cuentadanteSeleccionado.id,
           ambiente_id: ambienteSeleccionado.id,
-          bienes_ids: bienesSeleccionados,
-          observaciones,
-          asignado_por: user.id
+          bienes_ids: bienesSeleccionados
         })
       });
 
@@ -161,7 +152,7 @@ export default function AsignarBienes() {
       setError('Debes seleccionar un ambiente');
       return;
     }
-    if (step === 3 && bienesSeleccionados.length === 0) {
+    if (step === 2 && bienesSeleccionados.length === 0) {
       setError('Debes seleccionar al menos un bien');
       return;
     }
@@ -182,10 +173,11 @@ export default function AsignarBienes() {
 
   // Filtrar bienes por búsqueda
   const bienesFiltrados = bienesDisponibles.filter(bien =>
-    bien.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bien.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bien.categoria?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bien.marca?.toLowerCase().includes(searchTerm.toLowerCase())
+    (bien.codigo && bien.codigo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (bien.nombre && bien.nombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (bien.descripcion && bien.descripcion.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (bien.marca && bien.marca.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (bien.modelo && bien.modelo.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (!user) {
@@ -224,7 +216,7 @@ export default function AsignarBienes() {
                 1
               </div>
               <span className={`mt-2 text-sm ${step >= 1 ? 'text-[#39A900] font-medium' : 'text-gray-500'}`}>
-                Cuentadante
+                Cuentadante y Ambiente
               </span>
             </div>
 
@@ -239,7 +231,7 @@ export default function AsignarBienes() {
                 2
               </div>
               <span className={`mt-2 text-sm ${step >= 2 ? 'text-[#39A900] font-medium' : 'text-gray-500'}`}>
-                Ambiente
+                Seleccionar Bienes
               </span>
             </div>
 
@@ -254,21 +246,6 @@ export default function AsignarBienes() {
                 3
               </div>
               <span className={`mt-2 text-sm ${step >= 3 ? 'text-[#39A900] font-medium' : 'text-gray-500'}`}>
-                Bienes
-              </span>
-            </div>
-
-            {/* Línea 3 */}
-            <div className={`flex-1 h-1 self-start mt-5 ${step > 3 ? 'bg-[#39A900]' : 'bg-gray-300'}`} />
-
-            {/* Paso 4 */}
-            <div className="flex flex-col items-center flex-1">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                step >= 4 ? 'bg-[#39A900] border-[#39A900] text-white' : 'bg-white border-gray-300 text-gray-500'
-              }`}>
-                4
-              </div>
-              <span className={`mt-2 text-sm ${step >= 4 ? 'text-[#39A900] font-medium' : 'text-gray-500'}`}>
                 Confirmar
               </span>
             </div>
@@ -277,83 +254,99 @@ export default function AsignarBienes() {
 
         {/* Form Content */}
         <div className="bg-white rounded-xl shadow-lg p-8">
-          {/* Paso 1: Seleccionar Cuentadante */}
+          {/* Paso 1: Seleccionar Cuentadante y Ambiente */}
           {step === 1 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Paso 1: Seleccionar Cuentadante</h2>
-              <div className="space-y-4">
-                {cuentadantes.map((cuentadante) => (
-                  <div
-                    key={cuentadante.id}
-                    onClick={() => setCuentadanteSeleccionado(cuentadante)}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition ${
-                      cuentadanteSeleccionado?.id === cuentadante.id
-                        ? 'border-[#39A900] bg-green-50'
-                        : 'border-gray-200 hover:border-[#39A900] hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold text-gray-800">{cuentadante.nombre}</p>
-                        <p className="text-sm text-gray-600">{cuentadante.email}</p>
-                      </div>
-                      <div className="text-right text-sm text-gray-500">
-                        {cuentadante.centro_formacion && <p>{cuentadante.centro_formacion}</p>}
-                        {cuentadante.edificio && <p>{cuentadante.edificio}</p>}
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Paso 1: Seleccionar Cuentadante y Ambiente</h2>
+              
+              {/* Seleccionar Cuentadante */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">Cuentadante</h3>
+                <div className="space-y-4">
+                  {cuentadantes.map((cuentadante) => (
+                    <div
+                      key={cuentadante.id}
+                      onClick={() => setCuentadanteSeleccionado(cuentadante)}
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition ${
+                        cuentadanteSeleccionado?.id === cuentadante.id
+                          ? 'border-[#39A900] bg-green-50'
+                          : 'border-gray-200 hover:border-[#39A900] hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold text-gray-800">{cuentadante.nombre}</p>
+                          <p className="text-sm text-gray-600">{cuentadante.email}</p>
+                        </div>
+                        {cuentadante.sede_nombre && (
+                          <div className="text-right text-sm text-gray-500">
+                            <p>{cuentadante.sede_nombre}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
-                {cuentadantes.length === 0 && (
-                  <p className="text-gray-500 text-center py-8">No hay cuentadantes disponibles</p>
-                )}
+                  ))}
+                  {cuentadantes.length === 0 && (
+                    <p className="text-gray-500 text-center py-8">No hay cuentadantes disponibles</p>
+                  )}
+                </div>
               </div>
+
+              {/* Seleccionar Ambiente */}
+              {cuentadanteSeleccionado && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Ambiente</h3>
+                  
+                  {/* Buscador de ambientes */}
+                  <div className="mb-4">
+                    <input
+                      type="text"
+                      placeholder="Buscar ambiente por nombre..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Lista de ambientes con scroll */}
+                  <div className="max-h-[400px] overflow-y-auto border border-gray-200 rounded-lg">
+                    <div className="space-y-2 p-2">
+                      {ambientes
+                        .filter(amb => amb.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .map((ambiente) => (
+                          <div
+                            key={ambiente.id}
+                            onClick={() => setAmbienteSeleccionado(ambiente)}
+                            className={`p-4 border-2 rounded-lg cursor-pointer transition ${
+                              ambienteSeleccionado?.id === ambiente.id
+                                ? 'border-[#39A900] bg-green-50'
+                                : 'border-gray-200 hover:border-[#39A900] hover:bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="font-semibold text-gray-800">{ambiente.nombre}</p>
+                                {ambiente.sede_nombre && <p className="text-sm text-gray-600">{ambiente.sede_nombre}</p>}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      {ambientes.filter(amb => amb.nombre.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                        <p className="text-gray-500 text-center py-8">
+                          {ambientes.length === 0 ? 'No hay ambientes disponibles' : 'No se encontraron ambientes con ese nombre'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Paso 2: Seleccionar Ambiente */}
+          {/* Paso 2: Seleccionar Bienes */}
           {step === 2 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Paso 2: Seleccionar Ambiente</h2>
-              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <span className="font-semibold">Cuentadante seleccionado:</span> {cuentadanteSeleccionado?.nombre}
-                </p>
-              </div>
-              <div className="space-y-4">
-                {ambientes.map((ambiente) => (
-                  <div
-                    key={ambiente.id}
-                    onClick={() => setAmbienteSeleccionado(ambiente)}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition ${
-                      ambienteSeleccionado?.id === ambiente.id
-                        ? 'border-[#39A900] bg-green-50'
-                        : 'border-gray-200 hover:border-[#39A900] hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold text-gray-800">{ambiente.nombre}</p>
-                        <p className="text-sm text-gray-600">Código: {ambiente.codigo}</p>
-                      </div>
-                      <div className="text-right text-sm text-gray-500">
-                        {ambiente.centro_nombre && <p>{ambiente.centro_nombre}</p>}
-                        {ambiente.edificio_nombre && <p>{ambiente.edificio_nombre}</p>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {ambientes.length === 0 && (
-                  <p className="text-gray-500 text-center py-8">No hay ambientes disponibles</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Paso 3: Seleccionar Bienes */}
-          {step === 3 && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Paso 3: Seleccionar Bienes</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Paso 2: Seleccionar Bienes</h2>
               <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-1">
                 <p className="text-sm text-blue-800">
                   <span className="font-semibold">Cuentadante:</span> {cuentadanteSeleccionado?.nombre}
@@ -374,62 +367,68 @@ export default function AsignarBienes() {
                 />
               </div>
 
-              {/* Tabla de bienes */}
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        <input
-                          type="checkbox"
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setBienesSeleccionados(bienesFiltrados.map(b => b.id));
-                            } else {
-                              setBienesSeleccionados([]);
-                            }
-                          }}
-                          checked={bienesFiltrados.length > 0 && bienesSeleccionados.length === bienesFiltrados.length}
-                          className="w-4 h-4 text-[#39A900] rounded"
-                        />
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoría</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Marca</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Modelo</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {bienesFiltrados.map((bien) => (
-                      <tr
-                        key={bien.id}
-                        className={`hover:bg-gray-50 ${bienesSeleccionados.includes(bien.id) ? 'bg-green-50' : ''}`}
-                      >
-                        <td className="px-4 py-4">
+              {/* Tabla de bienes con scroll */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="max-h-[500px] overflow-y-auto">
+                  <table className="min-w-full">
+                    <thead className="bg-gray-50 sticky top-0 z-10">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase bg-gray-50">
                           <input
                             type="checkbox"
-                            checked={bienesSeleccionados.includes(bien.id)}
-                            onChange={() => handleToggleBien(bien.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setBienesSeleccionados(bienesFiltrados.map(b => b.id));
+                              } else {
+                                setBienesSeleccionados([]);
+                              }
+                            }}
+                            checked={bienesFiltrados.length > 0 && bienesSeleccionados.length === bienesFiltrados.length}
                             className="w-4 h-4 text-[#39A900] rounded"
                           />
-                        </td>
-                        <td className="px-4 py-4 text-sm font-medium text-gray-900">{bien.codigo}</td>
-                        <td className="px-4 py-4 text-sm text-gray-500">{bien.nombre}</td>
-                        <td className="px-4 py-4 text-sm text-gray-500">{bien.categoria}</td>
-                        <td className="px-4 py-4 text-sm text-gray-500">{bien.marca}</td>
-                        <td className="px-4 py-4 text-sm text-gray-500">{bien.modelo}</td>
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase bg-gray-50">Placa</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase bg-gray-50">Descripción</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase bg-gray-50">Marca</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase bg-gray-50">Modelo</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase bg-gray-50">Estado</th>
                       </tr>
-                    ))}
-                    {bienesFiltrados.length === 0 && (
-                      <tr>
-                        <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
-                          No hay bienes disponibles
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {bienesFiltrados.map((bien) => (
+                        <tr
+                          key={bien.id}
+                          className={`hover:bg-gray-50 ${bienesSeleccionados.includes(bien.id) ? 'bg-green-50' : ''}`}
+                        >
+                          <td className="px-4 py-4">
+                            <input
+                              type="checkbox"
+                              checked={bienesSeleccionados.includes(bien.id)}
+                              onChange={() => handleToggleBien(bien.id)}
+                              className="w-4 h-4 text-[#39A900] rounded"
+                            />
+                          </td>
+                          <td className="px-4 py-4 text-sm font-medium text-gray-900">{bien.codigo}</td>
+                          <td className="px-4 py-4 text-sm text-gray-500">{bien.nombre || bien.descripcion}</td>
+                          <td className="px-4 py-4 text-sm text-gray-500">{bien.marca || 'N/A'}</td>
+                          <td className="px-4 py-4 text-sm text-gray-500">{bien.modelo || 'N/A'}</td>
+                          <td className="px-4 py-4 text-sm text-gray-500">
+                            <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                              {bien.estado_asignacion || 'Disponible'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      {bienesFiltrados.length === 0 && (
+                        <tr>
+                          <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                            {bienesDisponibles.length === 0 ? 'No hay bienes disponibles para asignar' : 'No se encontraron bienes con ese criterio de búsqueda'}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
               <p className="mt-4 text-sm text-gray-600">
                 {bienesSeleccionados.length} bien(es) seleccionado(s)
@@ -437,10 +436,10 @@ export default function AsignarBienes() {
             </div>
           )}
 
-          {/* Paso 4: Confirmar */}
-          {step === 4 && (
+          {/* Paso 3: Confirmar */}
+          {step === 3 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Paso 4: Confirmar Asignación</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Paso 3: Confirmar Asignación</h2>
               
               {/* Resumen */}
               <div className="mb-6 p-6 bg-gray-50 rounded-lg space-y-3">
@@ -452,38 +451,28 @@ export default function AsignarBienes() {
                 <div>
                   <p className="text-sm text-gray-600">Ambiente</p>
                   <p className="font-semibold text-gray-800">{ambienteSeleccionado?.nombre}</p>
-                  <p className="text-sm text-gray-500">
-                    {ambienteSeleccionado?.edificio_nombre} - {ambienteSeleccionado?.centro_nombre}
-                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Bienes a asignar</p>
-                  <p className="font-semibold text-gray-800">{bienesSeleccionados.length} bien(es)</p>
-                  <div className="mt-2 space-y-1">
-                    {bienesDisponibles
-                      .filter(b => bienesSeleccionados.includes(b.id))
-                      .map(bien => (
-                        <p key={bien.id} className="text-sm text-gray-700">
-                          • {bien.codigo} - {bien.nombre}
-                        </p>
-                      ))
-                    }
+                  <p className="font-semibold text-gray-800 mb-2">{bienesSeleccionados.length} bien(es)</p>
+                  {/* Lista con scroll para muchos bienes */}
+                  <div className="mt-2 max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-white">
+                    <div className="space-y-2">
+                      {bienesDisponibles
+                        .filter(b => bienesSeleccionados.includes(b.id))
+                        .map(bien => (
+                          <div key={`confirm-${bien.id}`} className="flex items-start gap-2 text-sm text-gray-700 p-2 hover:bg-gray-50 rounded">
+                            <span className="text-[#39A900] font-bold">•</span>
+                            <div className="flex-1">
+                              <p className="font-medium">{bien.placa || bien.codigo}</p>
+                              <p className="text-xs text-gray-500">{bien.descripcion || bien.nombre}</p>
+                            </div>
+                          </div>
+                        ))
+                      }
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Observaciones */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Observaciones (opcional)
-                </label>
-                <textarea
-                  value={observaciones}
-                  onChange={(e) => setObservaciones(e.target.value)}
-                  rows={4}
-                  placeholder="Agregar observaciones sobre esta asignación..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
-                />
               </div>
             </div>
           )}
@@ -510,7 +499,7 @@ export default function AsignarBienes() {
               )}
             </div>
             <div>
-              {step < 4 ? (
+              {step < 3 ? (
                 <button
                   onClick={handleNext}
                   className="px-6 py-2 bg-gradient-to-r from-[#39A900] to-[#007832] text-white rounded-lg hover:opacity-90 transition"

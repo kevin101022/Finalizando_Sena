@@ -2,9 +2,9 @@ import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 /**
- * GET /api/solicitudes/[id]/detalles
+ * GET /api/solicitudes/[id]/firmas
  * 
- * Obtiene los bienes de una solicitud específica
+ * Obtiene todas las firmas de una solicitud
  */
 export async function GET(request, { params }) {
   try {
@@ -20,26 +20,28 @@ export async function GET(request, { params }) {
 
     const result = await query(`
       SELECT 
-        b.placa,
-        b.descripcion,
-        p.nombres || ' ' || p.apellidos as cuentadante_nombre
-      FROM detalle_solicitud ds
-      JOIN asignaciones a ON ds.asignacion_id = a.id
-      JOIN bienes b ON a.bien_id = b.id
-      JOIN persona p ON a.doc_persona = p.documento
-      WHERE ds.solicitud_id = $1
-      ORDER BY b.placa ASC
+        fs.id,
+        fs.rol_usuario,
+        fs.doc_persona,
+        fs.firma,
+        fs.observacion,
+        fs.fecha_firmado,
+        p.nombres || ' ' || p.apellidos as firmante_nombre
+      FROM firma_solicitud fs
+      JOIN persona p ON fs.doc_persona = p.documento
+      WHERE fs.solicitud_id = $1
+      ORDER BY fs.fecha_firmado ASC
     `, [parseInt(id)]);
 
     return NextResponse.json({
       success: true,
-      detalles: result.rows
+      firmas: result.rows
     });
 
   } catch (error) {
-    console.error('Error al obtener detalles:', error);
+    console.error('Error al obtener firmas:', error);
     return NextResponse.json(
-      { success: false, error: 'Error al cargar detalles' },
+      { success: false, error: 'Error al cargar firmas' },
       { status: 500 }
     );
   }

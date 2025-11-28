@@ -419,12 +419,30 @@ export default function InventarioBienes() {
                   <h4 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-[#39A900]">
                     Asignación Actual
                   </h4>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Responsable</p>
-                      <p className="font-semibold text-gray-900">{selectedBien.responsable || 'Sin asignar'}</p>
+                  {selectedBien.responsable ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Responsable</p>
+                        <p className="font-semibold text-gray-900">{selectedBien.responsable}</p>
+                      </div>
+                      {selectedBien.ambiente && (
+                        <div>
+                          <p className="text-sm text-gray-600">Ambiente</p>
+                          <p className="font-semibold text-gray-900">{selectedBien.ambiente}</p>
+                        </div>
+                      )}
+                      {selectedBien.sede && (
+                        <div>
+                          <p className="text-sm text-gray-600">Sede</p>
+                          <p className="font-semibold text-gray-900">{selectedBien.sede}</p>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-gray-500">Este bien no está asignado a ningún cuentadante</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

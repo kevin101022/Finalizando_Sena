@@ -23,13 +23,29 @@ export async function GET(request) {
           (SELECT estado FROM estado_bien WHERE bien_id = b.id ORDER BY fecha_registro DESC LIMIT 1),
           'desconocido'
         ) as estado,
+        (SELECT fecha_registro FROM estado_bien WHERE bien_id = b.id ORDER BY fecha_registro DESC LIMIT 1) as fecha_estado,
         (
           SELECT p.nombres || ' ' || p.apellidos 
           FROM asignaciones a 
           JOIN persona p ON a.doc_persona = p.documento 
           WHERE a.bien_id = b.id 
           ORDER BY a.fecha_asignacion DESC LIMIT 1
-        ) as responsable
+        ) as responsable,
+        (
+          SELECT amb.nombre
+          FROM asignaciones a 
+          JOIN ambientes amb ON a.ambiente_id = amb.id
+          WHERE a.bien_id = b.id 
+          ORDER BY a.fecha_asignacion DESC LIMIT 1
+        ) as ambiente,
+        (
+          SELECT s.nombre
+          FROM asignaciones a 
+          JOIN ambientes amb ON a.ambiente_id = amb.id
+          JOIN sedes s ON amb.sede_id = s.id
+          WHERE a.bien_id = b.id 
+          ORDER BY a.fecha_asignacion DESC LIMIT 1
+        ) as sede
       FROM bienes b
       LEFT JOIN marcas m ON b.marca_id = m.id
       WHERE 1=1
@@ -44,7 +60,13 @@ export async function GET(request) {
         b.descripcion ILIKE $${paramCount} OR
         b.modelo ILIKE $${paramCount} OR
         b.serial ILIKE $${paramCount} OR
-        m.nombre ILIKE $${paramCount}
+        m.nombre ILIKE $${paramCount} OR
+        EXISTS (
+          SELECT 1 FROM asignaciones a2
+          JOIN persona p2 ON a2.doc_persona = p2.documento
+          WHERE a2.bien_id = b.id 
+          AND (p2.nombres ILIKE $${paramCount} OR p2.apellidos ILIKE $${paramCount})
+        )
       )`;
       params.push(`%${search}%`);
       paramCount++;
@@ -112,9 +134,11 @@ export async function POST(request) {
       const nuevoBien = bienResult.rows[0];
 
       // 2. Insertar estado inicial en estado_bien
+      const estadoInicial = body.estado_inicial || 'buen_estado';
+      
       await query(
         'INSERT INTO estado_bien (bien_id, estado) VALUES ($1, $2)',
-        [nuevoBien.id, 'disponible'] // Estado inicial por defecto
+        [nuevoBien.id, estadoInicial]
       );
 
       await query('COMMIT');
@@ -146,4 +170,3 @@ export async function POST(request) {
     );
   }
 }
-

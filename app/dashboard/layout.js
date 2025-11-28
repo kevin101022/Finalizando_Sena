@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/app/components/Sidebar';
+import RoleSwitcher from '@/app/components/RoleSwitcher';
 
 /**
  * Layout compartido para todas las rutas de /dashboard
@@ -107,24 +108,16 @@ export default function DashboardLayout({ children }) {
                 <p className="text-xs sm:text-sm opacity-90 hidden sm:block">Sistema de Control de Activos</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              <div className="text-right">
-                <p className="text-xs sm:text-sm font-semibold truncate max-w-[120px] sm:max-w-none">{user.nombre}</p>
-                <p className="text-xs opacity-90 capitalize hidden sm:block">{user.rol}</p>
-                {/* Selector de roles si tiene múltiples */}
-                {user.rolesDisponibles && user.rolesDisponibles.length > 0 && (
-                  <select 
-                    onChange={(e) => handleCambiarRol(Number(e.target.value))}
-                    value={user.rolActual?.id || ''}
-                    className="mt-1 text-xs bg-white/20 border border-white/30 rounded px-2 py-1 text-white"
-                  >
-                    <option value={user.rolActual?.id}>{user.rolActual?.nombre || user.rol}</option>
-                    {user.rolesDisponibles.map(rol => (
-                      <option key={rol.id} value={rol.id}>{rol.nombre}</option>
-                    ))}
-                  </select>
-                )}
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+              <div className="text-right hidden md:block">
+                <p className="text-sm font-semibold">{user.nombre}</p>
+                <p className="text-xs opacity-90">
+                  {user.correo || user.documento}
+                </p>
               </div>
+              
+              {/* Componente elegante de cambio de rol */}
+              <RoleSwitcher user={user} onRoleChange={handleCambiarRol} />
             </div>
           </div>
         </div>

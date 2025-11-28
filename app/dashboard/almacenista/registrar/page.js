@@ -23,7 +23,9 @@ export default function RegistrarBien() {
     modelo: '',
     costo: '',
     fecha_compra: '',
-    vida_util: ''
+    vida_util: '',
+    // Novedades (estado_bien)
+    estado_inicial: 'buen_estado'
   });
 
   // Validar autenticación
@@ -37,6 +39,36 @@ export default function RegistrarBien() {
       setUser(parsedUser);
     }
   }, [router]);
+
+  // Generar placa automáticamente al cargar
+  useEffect(() => {
+    const generarPlaca = async () => {
+      try {
+        const response = await fetch('/api/bienes/generar-placa');
+        const data = await response.json();
+
+        if (data.success) {
+          setFormData(prev => ({
+            ...prev,
+            placa: data.placa
+          }));
+        }
+      } catch (err) {
+        console.error('Error al generar placa:', err);
+        // Generar placa fallback en el cliente
+        const timestamp = Date.now().toString().slice(-6);
+        const fallbackPlaca = `SENA-${new Date().getFullYear()}-${timestamp}`;
+        setFormData(prev => ({
+          ...prev,
+          placa: fallbackPlaca
+        }));
+      }
+    };
+
+    if (user) {
+      generarPlaca();
+    }
+  }, [user]);
 
   // Cargar MARCAS desde la API
   useEffect(() => {
@@ -221,15 +253,24 @@ export default function RegistrarBien() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Placa / Código <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="placa"
-                  value={formData.placa}
-                  onChange={handleChange}
-                  required
-                  placeholder="Ej: 987654321"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="placa"
+                    value={formData.placa}
+                    readOnly
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Placa generada automáticamente
+                </p>
               </div>
 
               <div>
@@ -346,6 +387,34 @@ export default function RegistrarBien() {
                   placeholder="Ej: 5"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Sección: Novedades (Estado Inicial) */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b-2 border-[#39A900]">
+              Novedades
+            </h3>
+            <div className="grid grid-cols-1 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Estado Inicial <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="estado_inicial"
+                  value={formData.estado_inicial}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
+                >
+                  <option value="buen_estado">Buen Estado</option>
+                  <option value="en_mantenimiento">En Mantenimiento</option>
+                  <option value="dañado">Dañado</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Estado en el que se encuentra el bien al momento del registro
+                </p>
               </div>
             </div>
           </div>

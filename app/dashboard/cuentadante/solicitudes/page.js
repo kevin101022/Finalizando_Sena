@@ -36,7 +36,8 @@ export default function SolicitudesCuentadante() {
       if (!user) return;
 
       try {
-        const res = await fetch(`/api/cuentadantes/solicitudes?responsable_id=${user.id}`);
+        // Obtener solicitudes que incluyen bienes del cuentadante
+        const res = await fetch(`/api/solicitudes/cuentadante?documento=${user.documento}`);
         const data = await res.json();
         if (data.success) setSolicitudes(data.solicitudes);
       } catch (error) {
@@ -148,11 +149,11 @@ export default function SolicitudesCuentadante() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">{sol.motivo}</div>
-                      <div className="text-xs text-gray-500">Destino: {sol.sede_destino}</div>
+                      <div className="text-xs text-gray-500">Destino: {sol.destino}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-700">
-                        {new Date(sol.fecha_inicio_prestamo).toLocaleDateString('es-CO')}
+                        {new Date(sol.fecha_ini_prestamo).toLocaleDateString('es-CO')}
                       </div>
                       <div className="text-xs text-gray-500">
                         hasta {new Date(sol.fecha_fin_prestamo).toLocaleDateString('es-CO')}
@@ -199,12 +200,12 @@ export default function SolicitudesCuentadante() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 uppercase">Destino</p>
-                  <p className="font-medium text-gray-900">{solicitudSeleccionada?.sede_destino}</p>
+                  <p className="font-medium text-gray-900">{solicitudSeleccionada?.destino}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 uppercase">Desde</p>
                   <p className="font-medium text-gray-900">
-                    {new Date(solicitudSeleccionada?.fecha_inicio_prestamo).toLocaleDateString('es-CO')}
+                    {new Date(solicitudSeleccionada?.fecha_ini_prestamo).toLocaleDateString('es-CO')}
                   </p>
                 </div>
                 <div>
@@ -258,14 +259,17 @@ export default function SolicitudesCuentadante() {
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#39A900] mx-auto"></div>
                 </div>
+              ) : detalles.length === 0 ? (
+                <p className="text-center text-gray-500 py-4">No hay bienes en esta solicitud</p>
               ) : (
                 <ul className="space-y-3">
                   {detalles.map((item, idx) => (
                     <li key={idx} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                       <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-gray-900">{item.cantidad}x {item.categoria}</p>
-                          <p className="text-sm text-gray-600">{item.descripcion}</p>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{item.placa}</p>
+                          <p className="text-sm text-gray-600">{item.descripcion || 'Sin descripción'}</p>
+                          <p className="text-xs text-gray-500 mt-1">Cuentadante: {item.cuentadante_nombre}</p>
                         </div>
                       </div>
                     </li>
