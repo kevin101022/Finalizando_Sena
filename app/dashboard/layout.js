@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/app/components/Sidebar';
 import RoleSwitcher from '@/app/components/RoleSwitcher';
+import { ToastProvider } from '@/app/components/Toast';
+import { ConfirmProvider } from '@/app/components/ConfirmDialog';
 
 /**
  * Layout compartido para todas las rutas de /dashboard
@@ -57,8 +59,19 @@ export default function DashboardLayout({ children }) {
       const data = await response.json();
 
       if (data.success) {
+        // Actualizar usuario en localStorage
         localStorage.setItem('user', JSON.stringify(data.user));
-        window.location.reload();
+        
+        // Actualizar estado local
+        setUser(data.user);
+        
+        // Redirigir al dashboard principal para mostrar el dashboard del nuevo rol
+        router.push('/dashboard');
+        
+        // Recargar la página para asegurar que todo se actualice correctamente
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       } else {
         alert(data.error || 'Error al cambiar de rol');
       }
@@ -78,9 +91,11 @@ export default function DashboardLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header - Responsive */}
-      <header className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white shadow-lg">
+    <ToastProvider>
+      <ConfirmProvider>
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+          {/* Header - Responsive */}
+          <header className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white shadow-lg">
         <div className="px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -139,5 +154,7 @@ export default function DashboardLayout({ children }) {
         </main>
       </div>
     </div>
+      </ConfirmProvider>
+    </ToastProvider>
   );
 }

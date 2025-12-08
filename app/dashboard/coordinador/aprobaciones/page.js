@@ -164,6 +164,8 @@ export default function AprobacionesCoordinador() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => {
+                          console.log('Estado de solicitud:', solicitud.estado, 'Tipo:', typeof solicitud.estado);
+                          console.log('Comparación:', solicitud.estado?.toLowerCase() === 'firmada_cuentadante');
                           setSelectedSolicitud(solicitud);
                           setShowModal(true);
                         }}
@@ -226,7 +228,7 @@ export default function AprobacionesCoordinador() {
                 </div>
               </div>
 
-              {selectedSolicitud.estado === 'pendiente' && (
+              {selectedSolicitud.estado?.toLowerCase() === 'firmada_cuentadante' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Observación de Respuesta (Opcional)</label>
                   <textarea
@@ -248,7 +250,7 @@ export default function AprobacionesCoordinador() {
                 Cerrar
               </button>
               
-              {selectedSolicitud.estado === 'pendiente' && (
+              {selectedSolicitud.estado?.toLowerCase() === 'firmada_cuentadante' && (
                 <>
                   <button
                     onClick={() => handleAction('rechazado')}

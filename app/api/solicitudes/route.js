@@ -13,7 +13,7 @@ export async function GET(request) {
     const documento = searchParams.get('documento');
 
     let sqlQuery = `
-      SELECT 
+      SELECT DISTINCT
         s.id,
         s.fecha_ini_prestamo,
         s.fecha_fin_prestamo,
@@ -28,7 +28,15 @@ export async function GET(request) {
           SELECT COUNT(*) 
           FROM firma_solicitud fs 
           WHERE fs.solicitud_id = s.id AND fs.firma = true
-        ) as firmas_completadas
+        ) as firmas_completadas,
+        (
+          SELECT DISTINCT pc.nombres || ' ' || pc.apellidos
+          FROM detalle_solicitud ds
+          JOIN asignaciones a ON ds.asignacion_id = a.id
+          JOIN persona pc ON a.doc_persona = pc.documento
+          WHERE ds.solicitud_id = s.id
+          LIMIT 1
+        ) as cuentadante_nombre
       FROM solicitudes s
       JOIN persona p ON s.doc_persona = p.documento
       LEFT JOIN sedes sed ON s.sede_id = sed.id

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function Login() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    correo: '',
+    documento: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -88,20 +88,20 @@ export default function Login() {
               </div>
             )}
 
-            {/* Campo de correo */}
+            {/* Campo de documento */}
             <div>
-              <label htmlFor="correo" className="block text-sm font-medium text-gray-700 mb-2">
-                Correo Electrónico
+              <label htmlFor="documento" className="block text-sm font-medium text-gray-700 mb-2">
+                Número de Documento
               </label>
               <input
-                type="email"
-                id="correo"
-                name="correo"
-                value={formData.correo}
+                type="text"
+                id="documento"
+                name="documento"
+                value={formData.documento}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent outline-none transition text-gray-900"
-                placeholder="ejemplo@sena.edu.co"
+                placeholder="1234567890"
               />
             </div>
 
@@ -149,9 +149,9 @@ export default function Login() {
           {/* Footer */}
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-600">
-              ¿Necesitas ayuda?{' '}
-              <a href="#" className="text-[#007832] hover:text-[#39A900] font-medium transition">
-                Contacta soporte
+              ¿No tienes cuenta?{' '}
+              <a href="/register" className="text-[#007832] hover:text-[#39A900] font-medium transition">
+                Regístrate aquí
               </a>
             </p>
           </div>

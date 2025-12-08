@@ -76,26 +76,34 @@ export default function SolicitudesCuentadante() {
     setFirmas([]);
   };
 
-  const handleFirmar = async (estado) => {
-    const observaciones = prompt(estado === 'aprobado' ? '¿Alguna observación? (opcional)' : 'Motivo del rechazo:');
-    if (estado === 'rechazado' && !observaciones) {
+  const handleFirmar = async (aprobar) => {
+    const observacion = aprobar 
+      ? prompt('¿Alguna observación? (opcional)') 
+      : prompt('Motivo del rechazo:');
+    
+    if (!aprobar && !observacion) {
       alert('Debes indicar el motivo del rechazo');
       return;
     }
 
-    if (!confirm(`¿Confirmar ${estado === 'aprobado' ? 'aprobación' : 'rechazo'}?`)) return;
+    if (!confirm(`¿Confirmar ${aprobar ? 'aprobación' : 'rechazo'}?`)) return;
 
     setProcesando(true);
     try {
       const res = await fetch(`/api/solicitudes/${solicitudSeleccionada.id}/firmar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario_id: user.id, estado, observaciones })
+        body: JSON.stringify({
+          rol: 'cuentadante',
+          documento: user.documento,
+          firma: aprobar,
+          observacion
+        })
       });
 
       const data = await res.json();
       if (data.success) {
-        alert(data.message);
+        alert(aprobar ? 'Solicitud aprobada' : 'Solicitud rechazada');
         setSolicitudes(prev => prev.filter(s => s.id !== solicitudSeleccionada.id));
         cerrarModal();
       } else {
@@ -219,9 +227,9 @@ export default function SolicitudesCuentadante() {
               <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <h3 className="text-sm font-semibold text-gray-800 mb-3">Estado de Aprobaciones</h3>
                 <div className="space-y-2">
-                  {['cuentadante_responsable', 'coordinador', 'administrador'].map((rol) => {
+                  {['cuentadante_responsable', 'coordinador'].map((rol) => {
                     const firma = firmas.find(f => f.rol_firmante === rol);
-                    const nombreRol = rol === 'cuentadante_responsable' ? 'Cuentadante' : rol.charAt(0).toUpperCase() + rol.slice(1);
+                    const nombreRol = rol === 'cuentadante_responsable' ? 'Cuentadante' : 'Coordinador (Aprobación Final)';
                     
                     return (
                       <div key={rol} className="flex items-center justify-between bg-white p-3 rounded-lg">
@@ -288,7 +296,7 @@ export default function SolicitudesCuentadante() {
                 Cancelar
               </button>
               <button
-                onClick={() => handleFirmar('rechazado')}
+                onClick={() => handleFirmar(false)}
                 disabled={procesando}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 flex items-center gap-2"
               >
@@ -296,7 +304,7 @@ export default function SolicitudesCuentadante() {
                 Rechazar
               </button>
               <button
-                onClick={() => handleFirmar('aprobado')}
+                onClick={() => handleFirmar(true)}
                 disabled={procesando}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 flex items-center gap-2"
               >

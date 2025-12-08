@@ -13,14 +13,22 @@ import pkg from 'pg';
 const { Pool } = pkg;
 import bcrypt from 'bcryptjs';
 
-// Configuración de la base de datos (mismo que lib/db.js)
-const pool = new Pool({
-    host: 'localhost',
-    port: 5432,
-    database: 'sena_bienes',
-    user: 'postgres',
-    password: '123456',
-});
+// Cargar variables de entorno
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+
+// Configuración de la base de datos desde variables de entorno
+const pool = new Pool(
+    process.env.DATABASE_URL 
+      ? { connectionString: process.env.DATABASE_URL }
+      : {
+          host: process.env.DB_HOST || 'localhost',
+          port: parseInt(process.env.DB_PORT) || 5432,
+          database: process.env.DB_NAME || 'sena_bienes',
+          user: process.env.DB_USER || 'postgres',
+          password: process.env.DB_PASSWORD || '123456',
+        }
+);
 
 const SALT_ROUNDS = 10;
 

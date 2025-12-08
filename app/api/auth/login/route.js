@@ -8,7 +8,7 @@ import { comparePassword, generateToken } from '@/lib/auth';
  * Endpoint de autenticación - Permite a los usuarios iniciar sesión
  * 
  * FLUJO:
- * 1. Recibe correo y password del cliente
+ * 1. Recibe documento y password del cliente
  * 2. Busca el usuario en la base de datos PostgreSQL
  * 3. Verifica la contraseña usando bcrypt
  * 4. Si es correcta, genera un JWT token
@@ -16,7 +16,7 @@ import { comparePassword, generateToken } from '@/lib/auth';
  * 
  * Body esperado:
  * {
- *   "correo": "admin@sena.edu.co",
+ *   "documento": "1000000001",
  *   "password": "admin123"
  * }
  * 
@@ -35,20 +35,20 @@ import { comparePassword, generateToken } from '@/lib/auth';
 export async function POST(request) {
   try {
     // 1. Obtener datos del body
-    const { correo, password } = await request.json();
+    const { documento, password } = await request.json();
 
-    // 2. Validar que existan correo y password
-    if (!correo || !password) {
+    // 2. Validar que existan documento y password
+    if (!documento || !password) {
       return NextResponse.json(
-        { error: 'Correo y contraseña son requeridos' },
+        { error: 'Documento y contraseña son requeridos' },
         { status: 400 }
       );
     }
 
-    // 3. Buscar persona en la base de datos por correo
+    // 3. Buscar persona en la base de datos por documento
     const result = await query(
-      'SELECT * FROM persona WHERE correo = $1',
-      [correo]
+      'SELECT * FROM persona WHERE documento = $1',
+      [documento]
     );
 
     // Si no se encontró la persona

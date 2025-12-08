@@ -66,11 +66,12 @@ export async function POST(request, { params }) {
       );
     }
 
-    if (rol === 'administrador' && estadoActual !== 'firmada_coordinador') {
+    // El administrador ya no puede firmar solicitudes
+    if (rol === 'administrador') {
       await query('ROLLBACK');
       return NextResponse.json(
-        { success: false, error: 'El coordinador aún no ha firmado' },
-        { status: 400 }
+        { success: false, error: 'El administrador no puede firmar solicitudes' },
+        { status: 403 }
       );
     }
 
@@ -85,14 +86,38 @@ export async function POST(request, { params }) {
     if (!firma) {
       // Si rechaza, la solicitud queda rechazada
       nuevoEstado = 'rechazada';
+      
+      // Desbloquear bienes cuando se rechaza (cuentadante o coordinador)
+      if (rol === 'cuentadante' || rol === 'coordinador') {
+        await query(`
+          UPDATE asignaciones 
+          SET bloqueado = false 
+          WHERE id IN (
+            SELECT asignacion_id 
+            FROM detalle_solicitud 
+            WHERE solicitud_id = $1
+          )
+        `, [parseInt(id)]);
+      }
     } else {
       // Si aprueba, avanza al siguiente estado
       if (rol === 'cuentadante') {
         nuevoEstado = 'firmada_cuentadante';
+        
+        // BLOQUEAR BIENES cuando el cuentadante firma
+        await query(`
+          UPDATE asignaciones 
+          SET bloqueado = true 
+          WHERE id IN (
+            SELECT asignacion_id 
+            FROM detalle_solicitud 
+            WHERE solicitud_id = $1
+          )
+        `, [parseInt(id)]);
       } else if (rol === 'coordinador') {
-        nuevoEstado = 'firmada_coordinador';
-      } else if (rol === 'administrador') {
+        // El coordinador da la aprobación final
         nuevoEstado = 'aprobada';
+        // Los bienes ya están bloqueados desde la firma del cuentadante
       }
     }
 

@@ -60,9 +60,14 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
         icon: <PackageIcon className="w-6 h-6" />
       },
       {
-        label: 'Solicitudes',
-        path: '/dashboard/cuentadante/solicitudes',
+        label: 'Solicitudes Pendientes',
+        path: '/dashboard/cuentadante/pendientes',
         icon: <FileIcon className="w-6 h-6" />
+      },
+      {
+        label: 'Historial',
+        path: '/dashboard/cuentadante/historial',
+        icon: <HistoryIcon className="w-6 h-6" />
       }
     ],
     administrador: [
@@ -73,15 +78,20 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
       },
       {
         label: 'Usuarios',
-        path: '/dashboard/admin/usuarios',
+        path: '/dashboard/administrador/usuarios',
         icon: <UsersIcon className="w-6 h-6" />
       }
     ],
     coordinador: [
       {
-        label: 'Solicitudes',
-        path: '/dashboard/coordinador/solicitudes',
+        label: 'Solicitudes Pendientes',
+        path: '/dashboard/coordinador/pendientes',
         icon: <FileIcon className="w-6 h-6" />
+      },
+      {
+        label: 'Historial',
+        path: '/dashboard/coordinador/historial',
+        icon: <HistoryIcon className="w-6 h-6" />
       }
     ],
     vigilante: [

@@ -75,7 +75,7 @@ const DashboardCuentadante = () => {
 
 const DashboardAdministrador = () => {
   const [stats, setStats] = useState({
-    solicitudesPendientes: 0,
+    totalUsuarios: 0,
     solicitudesAprobadas: 0,
     totalSolicitudes: 0
   });
@@ -108,13 +108,13 @@ const DashboardAdministrador = () => {
         icon={<ClipboardIcon className="w-10 h-10" />}
       />
       <StatCard 
-        title="Pendientes de Firmar" 
-        value={loading ? '...' : stats.solicitudesPendientes.toString()} 
-        color="from-orange-500 to-orange-600"
-        icon={<AlertIcon className="w-10 h-10" />}
+        title="Usuarios en el Sistema" 
+        value={loading ? '...' : stats.totalUsuarios.toString()} 
+        color="from-blue-500 to-blue-600"
+        icon={<UsersIcon className="w-10 h-10" />}
       />
       <StatCard 
-        title="Aprobadas" 
+        title="Solicitudes Aprobadas" 
         value={loading ? '...' : stats.solicitudesAprobadas.toString()} 
         color="from-purple-500 to-purple-600"
         icon={<CheckCircleIcon className="w-10 h-10" />}
@@ -173,28 +173,55 @@ const DashboardAlmacenista = ({ router }) => {
   );
 };
 
-const DashboardVigilante = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <StatCard 
-      title="Solicitudes Pendientes" 
-      value="5" 
-      color="from-orange-500 to-orange-600"
-      icon={<AlertIcon className="w-10 h-10" />}
-    />
-    <StatCard 
-      title="Aprobadas (3/3)" 
-      value="8" 
-      color="from-[#007832] to-[#39A900]"
-      icon={<CheckCircleIcon className="w-10 h-10" />}
-    />
-    <StatCard 
-      title="Rechazadas (< 3)" 
-      value="3" 
-      color="from-red-500 to-red-600"
-      icon={<ClipboardIcon className="w-10 h-10" />}
-    />
-  </div>
-);
+const DashboardVigilante = () => {
+  const [stats, setStats] = useState({
+    pendientesAutorizacion: 0,
+    enPrestamo: 0,
+    devueltos: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/dashboard/stats?rol=vigilante');
+        const data = await response.json();
+        if (data.success) {
+          setStats(data.stats);
+        }
+      } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <StatCard 
+        title="Pendientes de Autorización" 
+        value={loading ? '...' : stats.pendientesAutorizacion.toString()} 
+        color="from-orange-500 to-orange-600"
+        icon={<AlertIcon className="w-10 h-10" />}
+      />
+      <StatCard 
+        title="En Préstamo" 
+        value={loading ? '...' : stats.enPrestamo.toString()} 
+        color="from-blue-500 to-blue-600"
+        icon={<PackageIcon className="w-10 h-10" />}
+      />
+      <StatCard 
+        title="Devueltos Hoy" 
+        value={loading ? '...' : stats.devueltos.toString()} 
+        color="from-[#007832] to-[#39A900]"
+        icon={<CheckCircleIcon className="w-10 h-10" />}
+      />
+    </div>
+  );
+};
 
 const DashboardUsuario = () => {
   const [stats, setStats] = useState({

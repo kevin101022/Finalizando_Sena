@@ -32,9 +32,18 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+!ENV_TEMPLATE.txt
 
 # credenciales sensibles
 CREDENCIALES.md
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # vercel
 .vercel

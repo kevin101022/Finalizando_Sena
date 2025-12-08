@@ -12,27 +12,32 @@
    ↓ Ve solicitudes que incluyen sus bienes
    ↓ Firma o Rechaza (solo sus bienes)
    ↓ Estado: pendiente → firmada_cuentadante
+   ↓ **BIENES SE BLOQUEAN** (ya no disponibles para otras solicitudes)
+   ↓ Registro en firma_solicitud (rol: cuentadante)
    
 3. COORDINADOR
    ↓ Ve TODAS las solicitudes
    ↓ Puede firmar solo si cuentadante ya firmó
-   ↓ Aprueba o Rechaza
-   ↓ Estado: firmada_cuentadante → firmada_coordinador
-   
-4. ADMINISTRADOR
-   ↓ Ve TODAS las solicitudes
-   ↓ Puede firmar solo si coordinador ya firmó
    ↓ Aprueba o Rechaza (aprobación final)
-   ↓ Estado: firmada_coordinador → aprobada
+   ↓ Estado: firmada_cuentadante → aprobada
+   ↓ Registro en firma_solicitud (rol: coordinador)
    
-5. VIGILANTE (Pendiente)
-   ↓ Verifica que tenga las 3 firmas
+4. VIGILANTE - SALIDA
+   ↓ Verifica que tenga las 2 firmas (cuentadante + coordinador)
    ↓ Autoriza salida del bien
    ↓ Estado: aprobada → autorizada
-   ↓ Bienes se marcan como bloqueados
+   ↓ Bienes permanecen bloqueados (ya lo estaban desde firma del cuentadante)
+   ↓ Registro en firma_solicitud (rol: vigilante_salida)
    
-6. USUARIO retira el bien
+5. USUARIO retira el bien
    ↓ Estado: autorizada → en_prestamo
+   
+6. USUARIO devuelve el bien
+   ↓ VIGILANTE - ENTRADA
+   ↓ Registra devolución del bien
+   ↓ Estado: en_prestamo → devuelto
+   ↓ Bienes se desbloquean
+   ↓ Registro en firma_solicitud (rol: vigilante_entrada)
 ```
 
 ## 👥 Roles y Responsabilidades
@@ -68,24 +73,31 @@
 - ✅ Firmar solicitudes (solo si cuentadante ya firmó)
 - ✅ Rechazar solicitudes con observación
 - ✅ Ver estado de firmas en tiempo real
+- ✅ Aprobación final de solicitudes
 
 **Reglas:**
 - Ve todas las solicitudes sin importar el estado
 - Botones de firmar/rechazar se habilitan solo cuando el cuentadante ya firmó
-- Su firma es la segunda de tres necesarias
+- Su firma es la segunda y última (aprobación final)
 - Puede ver el progreso de firmas de cada solicitud
 
 ---
 
 ### 4. Vigilante
 **Acciones:**
-- ✅ Verificar solicitudes aprobadas
-- ✅ Autorizar salida de bienes
-- ✅ Ver historial de salidas
+- ✅ Verificar solicitudes aprobadas (2 firmas)
+- ✅ Autorizar salida de bienes (firma de salida)
+- ✅ Registrar entrada de bienes (firma de entrada)
+- ✅ Ver historial de salidas y entradas
+- ✅ Bloquear/desbloquear bienes
 
 **Reglas:**
-- Solo autoriza si la solicitud está aprobada por coordinador
-- Verifica que todos los cuentadantes hayan firmado
+- Solo autoriza salida si la solicitud está aprobada (cuentadante + coordinador)
+- Registra DOS firmas en firma_solicitud:
+  - vigilante_salida: Cuando autoriza la salida
+  - vigilante_entrada: Cuando registra la devolución
+- Al autorizar salida: bienes se bloquean
+- Al registrar entrada: bienes se desbloquean
 
 ---
 
@@ -106,34 +118,31 @@
 
 ### 6. Administrador
 **Acciones:**
-- ✅ Ver TODAS las solicitudes del sistema
-- ✅ Firmar solicitudes (solo si cuentadante Y coordinador ya firmaron)
-- ✅ Rechazar solicitudes con observación
-- ✅ Aprobación final de solicitudes
-- ✅ Gestionar usuarios y roles
+- ✅ Gestionar usuarios y asignar roles
+- ✅ Asignar sedes a usuarios
+- ✅ Ver TODAS las solicitudes del sistema (solo lectura)
 - ✅ Acceso completo al sistema
 
 **Reglas:**
-- Ve todas las solicitudes sin importar el estado
-- Botones de firmar/rechazar se habilitan solo cuando cuentadante Y coordinador ya firmaron
-- Su firma es la tercera y última (aprobación final)
+- NO firma solicitudes, solo gestiona el sistema
+- Puede ver todas las solicitudes para monitoreo
+- Se enfoca en la administración de personas, roles y sedes
 - Puede tener múltiples roles (administrador, cuentadante, usuario)
 
 ---
 
 ## 📊 Estados de una Solicitud
 
-| Estado | Descripción | Siguiente Acción |
-|--------|-------------|------------------|
-| **pendiente** | Esperando firma del cuentadante | Cuentadante debe firmar |
-| **firmada_cuentadante** | Cuentadante firmó, esperando coordinador | Coordinador debe firmar |
-| **firmada_coordinador** | Coordinador firmó, esperando administrador | Administrador debe firmar |
-| **aprobada** | Administrador aprobó (3/3 firmas) | Vigilante debe autorizar salida |
-| **rechazada** | Alguien rechazó la solicitud | Fin del proceso |
-| **cancelada** | Usuario canceló la solicitud | Fin del proceso |
-| **autorizada** | Vigilante autorizó salida | Usuario puede retirar |
-| **en_prestamo** | Bien entregado y en uso | Pendiente devolución |
-| **devuelto** | Bien devuelto | Proceso completado |
+| Estado | Descripción | Firmas | Siguiente Acción |
+|--------|-------------|--------|------------------|
+| **pendiente** | Esperando firma del cuentadante | 0/4 | Cuentadante debe firmar |
+| **firmada_cuentadante** | Cuentadante firmó, esperando coordinador | 1/4 | Coordinador debe firmar |
+| **aprobada** | Coordinador aprobó | 2/4 | Vigilante debe autorizar salida |
+| **autorizada** | Vigilante autorizó salida (bien bloqueado) | 3/4 | Usuario puede retirar |
+| **en_prestamo** | Bien entregado y en uso | 3/4 | Pendiente devolución |
+| **devuelto** | Bien devuelto (bien desbloqueado) | 4/4 | Proceso completado |
+| **rechazada** | Alguien rechazó la solicitud | - | Fin del proceso |
+| **cancelada** | Usuario canceló la solicitud | - | Fin del proceso |
 
 ---
 
@@ -188,13 +197,15 @@
 2. **Las placas se generan automáticamente con formato SENA-YYYY-NNNN**
 3. **Un bien bloqueado no puede ser asignado a otro cuentadante**
 4. **Solo bienes no bloqueados aparecen disponibles para solicitar**
+5. **Los bienes se bloquean cuando el cuentadante firma la solicitud** (no cuando el vigilante autoriza)
+6. **Si el cuentadante o coordinador rechaza, los bienes se desbloquean automáticamente**
 
 ### Solicitudes y Firmas
-5. **Orden estricto de firmas: Cuentadante → Coordinador → Administrador**
+5. **Orden estricto de firmas: Cuentadante → Coordinador (aprobación final)**
 6. **Coordinador NO puede firmar si cuentadante no ha firmado** (botones deshabilitados)
-7. **Administrador NO puede firmar si coordinador no ha firmado** (botones deshabilitados)
-8. **Cuentadante solo ve solicitudes que incluyen sus bienes**
-9. **Coordinador y Administrador ven TODAS las solicitudes**
+7. **Cuentadante solo ve solicitudes que incluyen sus bienes**
+8. **Coordinador y Administrador ven TODAS las solicitudes**
+9. **Administrador solo puede VER solicitudes, NO puede firmarlas**
 10. **Usuario solo puede cancelar solicitudes en estado "pendiente"**
 11. **Si alguien rechaza, la solicitud queda en estado "rechazada" (fin del proceso)**
 12. **Cada firma se registra con: rol, persona, fecha, observación**
@@ -216,7 +227,7 @@ El sistema permite cambiar entre roles sin cerrar sesión mediante un selector e
 ## ✅ Funcionalidades Implementadas
 
 ### Autenticación y Roles
-1. ✅ Login con correo y contraseña
+1. ✅ Login con documento y contraseña
 2. ✅ Sistema de roles múltiples con selector elegante
 3. ✅ Cambio de rol sin cerrar sesión
 4. ✅ Priorización de roles (coordinador > administrador > cuentadante > usuario)
@@ -235,10 +246,10 @@ El sistema permite cambiar entre roles sin cerrar sesión mediante un selector e
 13. ✅ Carrito de compras con scroll interno
 14. ✅ Vista de mis solicitudes (usuario)
 15. ✅ Cancelación de solicitudes pendientes
-16. ✅ Sistema de firmas secuenciales (cuentadante → coordinador → administrador)
+16. ✅ Sistema de firmas secuenciales (cuentadante → coordinador)
 17. ✅ Vista de solicitudes para cuentadante (con firma)
-18. ✅ Vista de solicitudes para coordinador (con firma condicional)
-19. ✅ Vista de solicitudes para administrador (con firma condicional)
+18. ✅ Vista de solicitudes para coordinador (con aprobación final)
+19. ✅ Vista de solicitudes para administrador (solo lectura)
 20. ✅ Indicador visual de estado de firmas
 21. ✅ Botones habilitados/deshabilitados según orden de firmas
 

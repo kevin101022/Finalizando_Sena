@@ -66,7 +66,7 @@ export async function GET(request) {
         SELECT COUNT(*) as total
         FROM solicitudes
         WHERE doc_persona = $1 
-          AND estado IN ('pendiente', 'firmada_cuentadante', 'firmada_coordinador', 'aprobada', 'autorizada')
+          AND estado IN ('pendiente', 'firmada_cuentadante', 'aprobada', 'autorizada')
       `;
       const solicitudesActivasResult = await query(solicitudesActivasQuery, [documento]);
       const solicitudesActivas = parseInt(solicitudesActivasResult.rows[0].total);
@@ -152,25 +152,16 @@ export async function GET(request) {
       const totalSolicitudesResult = await query(totalSolicitudesQuery);
       const totalSolicitudes = parseInt(totalSolicitudesResult.rows[0].total);
 
-      // Solicitudes pendientes de firma del administrador (coordinador ya firmó)
-      const solicitudesPendientesQuery = `
-        SELECT COUNT(DISTINCT s.id) as total
-        FROM solicitudes s
-        WHERE s.estado = 'firmada_coordinador'
-          AND NOT EXISTS (
-            SELECT 1 FROM firma_solicitud fs
-            WHERE fs.solicitud_id = s.id
-              AND fs.rol_usuario = 'administrador'
-          )
-      `;
-      const solicitudesPendientesResult = await query(solicitudesPendientesQuery);
-      const solicitudesPendientes = parseInt(solicitudesPendientesResult.rows[0].total);
+      // Total de usuarios en el sistema
+      const totalUsuariosQuery = `SELECT COUNT(*) as total FROM persona`;
+      const totalUsuariosResult = await query(totalUsuariosQuery);
+      const totalUsuarios = parseInt(totalUsuariosResult.rows[0].total);
 
-      // Solicitudes aprobadas por el administrador
+      // Solicitudes aprobadas (estado = 'aprobada')
       const solicitudesAprobadasQuery = `
         SELECT COUNT(*) as total
-        FROM firma_solicitud
-        WHERE rol_usuario = 'administrador' AND firma = true
+        FROM solicitudes
+        WHERE estado = 'aprobada'
       `;
       const solicitudesAprobadasResult = await query(solicitudesAprobadasQuery);
       const solicitudesAprobadas = parseInt(solicitudesAprobadasResult.rows[0].total);
@@ -179,8 +170,50 @@ export async function GET(request) {
         success: true,
         stats: {
           totalSolicitudes,
-          solicitudesPendientes,
+          totalUsuarios,
           solicitudesAprobadas
+        }
+      });
+    }
+
+    // Estadísticas para VIGILANTE
+    if (rol === 'vigilante') {
+      // Solicitudes aprobadas pendientes de autorización de salida
+      const pendientesQuery = `
+        SELECT COUNT(*) as total
+        FROM solicitudes
+        WHERE estado = 'aprobada'
+      `;
+      const pendientesResult = await query(pendientesQuery);
+      const pendientesAutorizacion = parseInt(pendientesResult.rows[0].total);
+
+      // Solicitudes en préstamo (autorizadas o en_prestamo)
+      const enPrestamoQuery = `
+        SELECT COUNT(*) as total
+        FROM solicitudes
+        WHERE estado IN ('autorizada', 'en_prestamo')
+      `;
+      const enPrestamoResult = await query(enPrestamoQuery);
+      const enPrestamo = parseInt(enPrestamoResult.rows[0].total);
+
+      // Solicitudes devueltas hoy
+      const devueltosQuery = `
+        SELECT COUNT(*) as total
+        FROM solicitudes s
+        JOIN firma_solicitud fs ON s.id = fs.solicitud_id
+        WHERE s.estado = 'devuelto'
+          AND fs.rol_usuario = 'vigilante_entrada'
+          AND DATE(fs.fecha_firmado) = CURRENT_DATE
+      `;
+      const devueltosResult = await query(devueltosQuery);
+      const devueltos = parseInt(devueltosResult.rows[0].total);
+
+      return NextResponse.json({
+        success: true,
+        stats: {
+          pendientesAutorizacion,
+          enPrestamo,
+          devueltos
         }
       });
     }
