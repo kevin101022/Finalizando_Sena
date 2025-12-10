@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/app/components/Button';
+import { useToast } from '@/app/components/Toast';
 
 export default function GestionUsuarios() {
   const router = useRouter();
+  const toast = useToast();
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +29,7 @@ export default function GestionUsuarios() {
       // Cargar usuarios
       const resUsuarios = await fetch('/api/administrador/usuarios');
       const dataUsuarios = await resUsuarios.json();
-      
+
       // Cargar roles
       const resRoles = await fetch('/api/administrador/roles');
       const dataRoles = await resRoles.json();
@@ -39,18 +42,18 @@ export default function GestionUsuarios() {
         setUsuarios(dataUsuarios.usuarios);
         setRoles(dataRoles.roles);
         setSedes(dataSedes.sedes);
-        
+
         // Encontrar el ID del rol "usuario"
         const rolUsuario = dataRoles.roles.find(r => r.nombre === 'usuario');
         if (rolUsuario) {
           setRolUsuarioId(rolUsuario.id);
         }
       } else {
-        alert('Error al cargar datos');
+        toast.error('Error al cargar datos');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al cargar datos');
+      toast.error('Error al cargar datos');
     } finally {
       setLoading(false);
     }
@@ -60,12 +63,12 @@ export default function GestionUsuarios() {
     setUsuarioSeleccionado(usuario);
     // Pre-seleccionar los roles actuales del usuario
     let idsRoles = usuario.roles.map(r => r.id);
-    
+
     // Asegurar que el rol "usuario" siempre esté seleccionado
     if (rolUsuarioId && !idsRoles.includes(rolUsuarioId)) {
       idsRoles.push(rolUsuarioId);
     }
-    
+
     setRolesSeleccionados(idsRoles);
     setRolPrincipal(usuario.rol_principal_id);
     // Pre-seleccionar la sede actual
@@ -77,7 +80,7 @@ export default function GestionUsuarios() {
   const toggleRol = (rolId) => {
     // No permitir quitar el rol "usuario"
     if (rolId === rolUsuarioId && rolesSeleccionados.includes(rolId)) {
-      alert('El rol "usuario" no se puede quitar. Todos los usuarios deben tener este rol.');
+      toast.warning('El rol "usuario" no se puede quitar. Todos los usuarios deben tener este rol.');
       return;
     }
 
@@ -85,7 +88,7 @@ export default function GestionUsuarios() {
       // Remover rol
       const nuevosRoles = rolesSeleccionados.filter(id => id !== rolId);
       setRolesSeleccionados(nuevosRoles);
-      
+
       // Si era el rol principal, limpiar
       if (rolPrincipal === rolId) {
         setRolPrincipal(nuevosRoles.length > 0 ? nuevosRoles[0] : null);
@@ -93,7 +96,7 @@ export default function GestionUsuarios() {
     } else {
       // Agregar rol
       setRolesSeleccionados([...rolesSeleccionados, rolId]);
-      
+
       // Si es el primer rol, hacerlo principal
       if (rolesSeleccionados.length === 0) {
         setRolPrincipal(rolId);
@@ -103,19 +106,19 @@ export default function GestionUsuarios() {
 
   const guardarCambios = async () => {
     if (!usuarioSeleccionado) return;
-    
+
     if (rolesSeleccionados.length === 0) {
-      alert('Debe asignar al menos un rol');
+      toast.warning('Debe asignar al menos un rol');
       return;
     }
 
     if (!rolPrincipal) {
-      alert('Debe seleccionar un rol principal');
+      toast.warning('Debe seleccionar un rol principal');
       return;
     }
 
     if (!sedeSeleccionada) {
-      alert('Debe seleccionar una sede');
+      toast.warning('Debe seleccionar una sede');
       return;
     }
 
@@ -133,7 +136,7 @@ export default function GestionUsuarios() {
       const dataRoles = await responseRoles.json();
 
       if (!dataRoles.success) {
-        alert(dataRoles.error || 'Error al actualizar roles');
+        toast.error(dataRoles.error || 'Error al actualizar roles');
         return;
       }
 
@@ -149,16 +152,16 @@ export default function GestionUsuarios() {
       const dataSede = await responseSede.json();
 
       if (dataSede.success) {
-        alert('Roles y sede actualizados correctamente');
+        toast.success('Roles y sede actualizados correctamente');
         setUsuarioSeleccionado(null);
         setSedeSeleccionada(null);
         cargarDatos(); // Recargar la lista
       } else {
-        alert(dataSede.error || 'Error al actualizar sede');
+        toast.error(dataSede.error || 'Error al actualizar sede');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al guardar cambios');
+      toast.error('Error al guardar cambios');
     }
   };
 
@@ -176,142 +179,138 @@ export default function GestionUsuarios() {
         <h2 className="text-2xl font-bold text-gray-800">Gestión de Usuarios</h2>
         <p className="text-gray-600">Asignar roles a usuarios del sistema</p>
       </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          {/* Lista de Usuarios */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Usuarios</h2>
-            <div className="space-y-2 max-h-[600px] overflow-y-auto">
-              {usuarios.map(usuario => (
-                <div
-                  key={usuario.id}
-                  onClick={() => seleccionarUsuario(usuario)}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition ${
-                    usuarioSeleccionado?.id === usuario.id
-                      ? 'border-[#39A900] bg-green-50'
-                      : 'border-gray-200 hover:border-[#39A900] hover:bg-gray-50'
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Lista de Usuarios */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Usuarios</h2>
+          <div className="space-y-2 max-h-[600px] overflow-y-auto">
+            {usuarios.map(usuario => (
+              <div
+                key={usuario.id}
+                onClick={() => seleccionarUsuario(usuario)}
+                className={`p-4 rounded-lg border-2 cursor-pointer transition ${usuarioSeleccionado?.id === usuario.id
+                  ? 'border-[#39A900] bg-green-50'
+                  : 'border-gray-200 hover:border-[#39A900] hover:bg-gray-50'
                   }`}
-                >
-                  <p className="font-semibold text-gray-800">{usuario.nombre}</p>
-                  <p className="text-sm text-gray-600">{usuario.email}</p>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {usuario.roles.map(rol => (
-                      <span
-                        key={rol.id}
-                        className={`text-xs px-2 py-1 rounded ${
-                          rol.es_principal
-                            ? 'bg-[#39A900] text-white font-semibold'
-                            : 'bg-gray-200 text-gray-700'
+              >
+                <p className="font-semibold text-gray-800">{usuario.nombre}</p>
+                <p className="text-sm text-gray-600">{usuario.email}</p>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {usuario.roles.map(rol => (
+                    <span
+                      key={rol.id}
+                      className={`text-xs px-2 py-1 rounded ${rol.es_principal
+                        ? 'bg-[#39A900] text-white font-semibold'
+                        : 'bg-gray-200 text-gray-700'
                         }`}
-                      >
-                        {rol.nombre}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Panel de Edición */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Asignar Roles</h2>
-            
-            {usuarioSeleccionado ? (
-              <div>
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600">Editando:</p>
-                  <p className="font-semibold text-gray-800">{usuarioSeleccionado.nombre}</p>
-                  <p className="text-sm text-gray-600">{usuarioSeleccionado.email}</p>
-                </div>
-
-                <div className="space-y-4">
-                  <p className="font-semibold text-gray-700">Selecciona los roles:</p>
-                  <p className="text-xs text-gray-500">* El rol "usuario" es obligatorio y no se puede quitar</p>
-                  
-                  {roles.map(rol => {
-                    const esRolUsuario = rol.id === rolUsuarioId;
-                    const estaSeleccionado = rolesSeleccionados.includes(rol.id);
-                    
-                    return (
-                      <div
-                        key={rol.id}
-                        className={`flex items-center justify-between p-3 border rounded-lg ${
-                          esRolUsuario ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={estaSeleccionado}
-                            onChange={() => toggleRol(rol.id)}
-                            disabled={esRolUsuario}
-                            className="w-5 h-5 text-[#39A900] rounded focus:ring-[#39A900] disabled:opacity-50"
-                          />
-                          <div>
-                            <p className="font-medium text-gray-800">
-                              {rol.nombre}
-                              {esRolUsuario && <span className="ml-2 text-xs text-blue-600">(Obligatorio)</span>}
-                            </p>
-                          </div>
-                        </div>
-
-                        {estaSeleccionado && (
-                          <button
-                            onClick={() => setRolPrincipal(rol.id)}
-                            className={`text-xs px-3 py-1 rounded ${
-                              rolPrincipal === rol.id
-                                ? 'bg-[#39A900] text-white font-semibold'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                          >
-                            {rolPrincipal === rol.id ? '★ Principal' : 'Hacer Principal'}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-6">
-                  <p className="font-semibold text-gray-700 mb-2">Selecciona la sede:</p>
-                  <select
-                    value={sedeSeleccionada || ''}
-                    onChange={(e) => setSedeSeleccionada(parseInt(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
-                  >
-                    <option value="">Seleccionar sede...</option>
-                    {sedes.map(sede => (
-                      <option key={sede.id} value={sede.id}>
-                        {sede.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="mt-6 flex gap-3">
-                  <button
-                    onClick={guardarCambios}
-                    className="flex-1 bg-[#39A900] hover:bg-[#007832] text-white font-semibold py-3 px-6 rounded-lg transition"
-                  >
-                    Guardar Cambios
-                  </button>
-                  <button
-                    onClick={() => setUsuarioSeleccionado(null)}
-                    className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
-                  >
-                    Cancelar
-                  </button>
+                    >
+                      {rol.nombre}
+                    </span>
+                  ))}
                 </div>
               </div>
-            ) : (
-              <div className="text-center text-gray-500 py-12">
-                <p>← Selecciona un usuario de la lista para asignar roles</p>
-              </div>
-            )}
+            ))}
           </div>
-
         </div>
+
+        {/* Panel de Edición */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Asignar Roles</h2>
+
+          {usuarioSeleccionado ? (
+            <div>
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Editando:</p>
+                <p className="font-semibold text-gray-800">{usuarioSeleccionado.nombre}</p>
+                <p className="text-sm text-gray-600">{usuarioSeleccionado.email}</p>
+              </div>
+
+              <div className="space-y-4">
+                <p className="font-semibold text-gray-700">Selecciona los roles:</p>
+                <p className="text-xs text-gray-500">* El rol "usuario" es obligatorio y no se puede quitar</p>
+
+                {roles.map(rol => {
+                  const esRolUsuario = rol.id === rolUsuarioId;
+                  const estaSeleccionado = rolesSeleccionados.includes(rol.id);
+
+                  return (
+                    <div
+                      key={rol.id}
+                      className={`flex items-center justify-between p-3 border rounded-lg ${esRolUsuario ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={estaSeleccionado}
+                          onChange={() => toggleRol(rol.id)}
+                          disabled={esRolUsuario}
+                          className="w-5 h-5 text-[#39A900] rounded focus:ring-[#39A900] disabled:opacity-50"
+                        />
+                        <div>
+                          <p className="font-medium text-gray-800">
+                            {rol.nombre}
+                            {esRolUsuario && <span className="ml-2 text-xs text-blue-600">(Obligatorio)</span>}
+                          </p>
+                        </div>
+                      </div>
+
+                      {estaSeleccionado && (
+                        <button
+                          onClick={() => setRolPrincipal(rol.id)}
+                          className={`text-xs px-3 py-1 rounded ${rolPrincipal === rol.id
+                            ? 'bg-[#39A900] text-white font-semibold'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                        >
+                          {rolPrincipal === rol.id ? '★ Principal' : 'Hacer Principal'}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6">
+                <p className="font-semibold text-gray-700 mb-2">Selecciona la sede:</p>
+                <select
+                  value={sedeSeleccionada || ''}
+                  onChange={(e) => setSedeSeleccionada(parseInt(e.target.value))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
+                >
+                  <option value="">Seleccionar sede...</option>
+                  {sedes.map(sede => (
+                    <option key={sede.id} value={sede.id}>
+                      {sede.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <Button
+                  onClick={guardarCambios}
+                  className="flex-1"
+                >
+                  Guardar Cambios
+                </Button>
+                <button
+                  onClick={() => setUsuarioSeleccionado(null)}
+                  className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 py-12">
+              <p>← Selecciona un usuario de la lista para asignar roles</p>
+            </div>
+          )}
+        </div>
+
+      </div>
 
     </div>
   );

@@ -43,25 +43,25 @@ Aplicación web desarrollada con Next.js que permite gestionar el inventario de 
 
 - Node.js 18+ 
 - PostgreSQL 14+
-- npm o yarn
+- pnpm
 
 ### Pasos de Instalación
 
 1. **Clona el repositorio:**
 ```bash
-git clone https://github.com/NeygerSerrano/sgb-sena.git
-cd sgb-sena
+git clone https://github.com/kevin101022/Finalizando_Sena.git
+cd Finalizando_Sena
 ```
 
 2. **Instala las dependencias:**
 ```bash
-npm install
+pnpm install
 ```
 
 3. **Configura las variables de entorno:**
-   - Copia el archivo de plantilla:
+   - Copia el archivo de ejemplo:
    ```bash
-   cp ENV_TEMPLATE.txt .env.local
+   cp .env.example .env.local
    ```
    - Edita `.env.local` con tus credenciales de PostgreSQL:
    ```env
@@ -101,16 +101,17 @@ npm run dev
 ## 🚀 Scripts Disponibles
 
 ```bash
-npm run dev          # Inicia el servidor de desarrollo
-npm run build        # Construye la aplicación para producción
-npm run start        # Inicia el servidor de producción
-npm run lint         # Ejecuta el linter
+pnpm run dev          # Inicia el servidor de desarrollo
+pnpm run build        # Construye la aplicación para producción
+pnpm run start        # Inicia el servidor de producción
+pnpm run lint         # Ejecuta el linter
 
 # Scripts de base de datos
-npm run setup-db     # Configura la base de datos desde cero
-npm run reset-db     # Resetea la base de datos
-npm run create-users # Crea usuarios de prueba
-npm run create-data  # Crea datos de prueba
+pnpm run setup-db     # Configura la base de datos desde cero
+pnpm run reset-db     # Resetea la base de datos
+pnpm run create-users     # Crea usuarios de prueba
+pnpm run create-locations # Crea sedes y ambientes de prueba
+pnpm run create-data      # Crea datos de prueba
 ```
 
 ## 👥 Roles del Sistema
@@ -154,7 +155,7 @@ Ver `FLUJO_SISTEMA.md` para más detalles.
 ## 📁 Estructura del Proyecto
 
 ```
-sgb-sena/
+Finalizando_Sena/
 ├── app/
 │   ├── api/              # API Routes (backend)
 │   ├── components/       # Componentes reutilizables
@@ -166,7 +167,6 @@ sgb-sena/
 │   └── solicitudUtils.js # Utilidades de solicitudes
 ├── scripts/             # Scripts de base de datos
 ├── database_schema.sql  # Esquema de la base de datos
-├── ENV_TEMPLATE.txt     # Plantilla de variables de entorno
 └── README.md
 ```
 
@@ -229,13 +229,13 @@ npm start
 - Asegúrate de que la base de datos `sena_bienes` exista
 
 ### Error al iniciar sesión
-- Verifica que los usuarios de prueba estén creados: `npm run create-users`
+- Verifica que los usuarios de prueba estén creados: `pnpm run create-users`
 - Revisa que el JWT_SECRET esté configurado
 
 ### Problemas con dependencias
 ```bash
-rm -rf node_modules package-lock.json
-npm install
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
 ```
 
 ## 🤝 Contribuciones

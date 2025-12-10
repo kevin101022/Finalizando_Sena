@@ -6,6 +6,7 @@ import ModalDetalleSolicitud from '@/app/components/ModalDetalleSolicitud';
 import TablaSolicitudes from '@/app/components/TablaSolicitudes';
 import { useToast } from '@/app/components/Toast';
 import { useConfirm } from '@/app/components/ConfirmDialog';
+import { Button } from '@/app/components/Button';
 
 export default function SolicitudesPendientesCoordinador() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function SolicitudesPendientesCoordinador() {
       setLoading(true);
       const res = await fetch('/api/solicitudes?rol=coordinador');
       const data = await res.json();
-      
+
       if (data.success) {
         // Filtrar solo las que están firmadas por cuentadante (pendientes de coordinador)
         const pendientes = data.solicitudes.filter(s => s.estado === 'firmada_cuentadante');
@@ -84,7 +85,7 @@ export default function SolicitudesPendientesCoordinador() {
         placeholder: aprobar ? 'Ingresa una observación...' : 'Debes indicar el motivo...'
       }
     );
-    
+
     if (!aprobar && !observacion) {
       toast.warning('Debes indicar el motivo del rechazo');
       return;
@@ -154,22 +155,21 @@ export default function SolicitudesPendientesCoordinador() {
         >
           {solicitudSeleccionada.estado?.toLowerCase() === 'firmada_cuentadante' && (
             <>
-              <button
+              <Button
                 onClick={() => handleFirmar(false)}
                 disabled={!puedeFiremarState}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="danger"
                 title={!puedeFiremarState ? 'El cuentadante debe firmar primero' : ''}
               >
                 Rechazar
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => handleFirmar(true)}
                 disabled={!puedeFiremarState}
-                className="px-4 py-2 bg-[#39A900] text-white rounded-lg hover:bg-[#2e8b00] transition disabled:opacity-50 disabled:cursor-not-allowed"
                 title={!puedeFiremarState ? 'El cuentadante debe firmar primero' : ''}
               >
                 Aprobar
-              </button>
+              </Button>
             </>
           )}
         </ModalDetalleSolicitud>

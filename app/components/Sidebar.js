@@ -13,7 +13,8 @@ import {
   ChartIcon,
   DoorIcon,
   PlusIcon,
-  HistoryIcon
+  HistoryIcon,
+  ClockIcon
 } from '../components/Icons';
 
 /**
@@ -43,14 +44,14 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
         icon: <UserIcon className="w-6 h-6" />
       },
       {
-        label: 'Historial de Asignaciones',
-        path: '/dashboard/almacenista/historial-asignaciones',
-        icon: <ClipboardIcon className="w-6 h-6" />
-      },
-      {
         label: 'Inventario Completo',
         path: '/dashboard/almacenista/inventario',
-        icon: <ClipboardIcon className="w-6 h-6" />
+        icon: <PackageIcon className="w-6 h-6" />
+      },
+      {
+        label: 'Historial',
+        path: '/dashboard/almacenista/historial-asignaciones',
+        icon: <HistoryIcon className="w-6 h-6" />
       }
     ],
     cuentadante: [
@@ -101,6 +102,11 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
         icon: <DoorIcon className="w-6 h-6" />
       },
       {
+        label: 'Reingreso de Bienes',
+        path: '/dashboard/vigilante/reingreso',
+        icon: <PackageIcon className="w-6 h-6" />
+      },
+      {
         label: 'Historial',
         path: '/dashboard/vigilante/historial',
         icon: <HistoryIcon className="w-6 h-6" />
@@ -124,24 +130,10 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
 
   return (
     <aside
-      className={`bg-gradient-to-b from-[#39A900] to-[#007832] text-white transition-all duration-300 ease-in-out ${
-        isOpen ? 'w-64' : 'w-0'
-      } overflow-hidden flex-shrink-0`}
+      className={`bg-gradient-to-b from-[#39A900] to-[#007832] text-white transition-all duration-300 ease-in-out ${isOpen ? 'w-64' : 'w-0'
+        } overflow-hidden flex-shrink-0`}
     >
       <div className="flex flex-col h-full">
-        {/* Header del Sidebar */}
-        <div className="p-6 border-b border-white/20">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-xl font-bold">
-              {userName?.charAt(0).toUpperCase() || 'U'}
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-sm opacity-90">Usuario</p>
-              <p className="font-semibold text-sm truncate">{userName}</p>
-            </div>
-          </div>
-        </div>
-
         {/* Navegación */}
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-1 px-3">
@@ -157,7 +149,7 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
                 </span>
               </button>
             </li>
-            
+
             {currentMenu.map((item, index) => (
               <li key={index}>
                 <button

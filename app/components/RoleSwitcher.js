@@ -1,6 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import {
+  UserIcon,
+  UsersIcon,
+  PackageIcon,
+  ClipboardIcon,
+  AlertIcon,
+  DoorIcon
+} from '../components/Icons';
 
 /**
  * Componente elegante para cambiar entre roles
@@ -34,15 +42,16 @@ export default function RoleSwitcher({ user, onRoleChange }) {
 
   // Mapeo de roles a colores e iconos
   const roleStyles = {
-    administrador: { color: 'bg-purple-500', icon: '👑' },
-    coordinador: { color: 'bg-blue-500', icon: '📋' },
-    cuentadante: { color: 'bg-green-500', icon: '📦' },
-    almacenista: { color: 'bg-orange-500', icon: '🏪' },
-    usuario: { color: 'bg-teal-500', icon: '👤' },
-    vigilante: { color: 'bg-gray-500', icon: '🛡️' }
+    administrador: { color: 'bg-purple-500', icon: <UsersIcon className="w-5 h-5" /> },
+    coordinador: { color: 'bg-blue-500', icon: <ClipboardIcon className="w-5 h-5" /> },
+    cuentadante: { color: 'bg-green-500', icon: <PackageIcon className="w-5 h-5" /> },
+    almacenista: { color: 'bg-orange-500', icon: <PackageIcon className="w-5 h-5" /> },
+    usuario: { color: 'bg-teal-500', icon: <UserIcon className="w-5 h-5" /> },
+    vigilante: { color: 'bg-gray-500', icon: <DoorIcon className="w-5 h-5" /> }
   };
 
-  const currentRoleStyle = roleStyles[user.rol] || roleStyles.usuario;
+  const getRoleStyle = (rol) => roleStyles[rol] || roleStyles.usuario;
+  const currentRoleStyle = getRoleStyle(user.rol);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -52,16 +61,18 @@ export default function RoleSwitcher({ user, onRoleChange }) {
         className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-200 border border-white/20 backdrop-blur-sm"
       >
         <div className="flex items-center gap-2">
-          <span className="text-lg">{currentRoleStyle.icon}</span>
-          <div className="text-left hidden sm:block">
-            <p className="text-xs font-semibold capitalize">{user.rol}</p>
-            <p className="text-[10px] opacity-75">Cambiar rol</p>
+          <span className="text-white">{currentRoleStyle.icon}</span>
+          <div className="text-left hidden sm:block leading-tight">
+            <p className="text-sm font-bold truncate max-w-[150px]">
+              {user.nombres ? `${user.nombres.split(' ')[0]} ${user.apellidos?.split(' ')[0] || ''}` : user.nombre}
+            </p>
+            <p className="text-[10px] uppercase tracking-wider opacity-90">{user.rol}</p>
           </div>
         </div>
-        <svg 
+        <svg
           className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-          fill="none" 
-          stroke="currentColor" 
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -70,20 +81,20 @@ export default function RoleSwitcher({ user, onRoleChange }) {
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50 animate-fadeIn">
+        <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50 animate-fadeIn text-gray-800">
           <div className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white px-4 py-2">
             <p className="text-xs font-semibold">Cambiar a:</p>
           </div>
           <div className="py-1">
             {user.rolesDisponibles.map((rol) => {
-              const style = roleStyles[rol.nombre] || roleStyles.usuario;
+              const style = getRoleStyle(rol.nombre);
               return (
                 <button
                   key={rol.id}
                   onClick={() => handleRoleClick(rol.id)}
                   className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-150 flex items-center gap-3 group"
                 >
-                  <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-gray-500 group-hover:text-[#39A900] transition-colors duration-200">
                     {style.icon}
                   </span>
                   <div className="flex-1">
@@ -94,14 +105,6 @@ export default function RoleSwitcher({ user, onRoleChange }) {
                       {getRoleDescription(rol.nombre)}
                     </p>
                   </div>
-                  <svg 
-                    className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
                 </button>
               );
             })}

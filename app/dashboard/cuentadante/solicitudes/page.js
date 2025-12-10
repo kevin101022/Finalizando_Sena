@@ -2,15 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/app/components/Toast';
+import { useConfirm } from '@/app/components/ConfirmDialog';
 import { FileIcon, CheckCircleIcon, AlertIcon, PackageIcon } from '@/app/components/Icons';
 
 export default function SolicitudesCuentadante() {
   const router = useRouter();
+  const toast = useToast();
+  const { confirm, prompt } = useConfirm();
   const [user, setUser] = useState(null);
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
-  
+
   // Modal
   const [modalAbierto, setModalAbierto] = useState(false);
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
@@ -77,16 +81,25 @@ export default function SolicitudesCuentadante() {
   };
 
   const handleFirmar = async (aprobar) => {
-    const observacion = aprobar 
-      ? prompt('¿Alguna observación? (opcional)') 
-      : prompt('Motivo del rechazo:');
-    
+    const observacion = await prompt(
+      aprobar ? 'Observación (opcional):' : 'Motivo del rechazo:',
+      {
+        title: aprobar ? 'Aprobar solicitud' : 'Rechazar solicitud',
+        placeholder: aprobar ? 'Ingresa una observación...' : 'Debes indicar el motivo...'
+      }
+    );
+
     if (!aprobar && !observacion) {
-      alert('Debes indicar el motivo del rechazo');
+      toast.warning('Debes indicar el motivo del rechazo');
       return;
     }
 
-    if (!confirm(`¿Confirmar ${aprobar ? 'aprobación' : 'rechazo'}?`)) return;
+    const confirmed = await confirm(`¿Confirmar ${aprobar ? 'aprobación' : 'rechazo'}?`, {
+      title: aprobar ? 'Aprobar solicitud' : 'Rechazar solicitud',
+      confirmText: aprobar ? 'Aprobar' : 'Rechazar',
+      type: aprobar ? 'success' : 'danger'
+    });
+    if (!confirmed) return;
 
     setProcesando(true);
     try {
@@ -103,14 +116,14 @@ export default function SolicitudesCuentadante() {
 
       const data = await res.json();
       if (data.success) {
-        alert(aprobar ? 'Solicitud aprobada' : 'Solicitud rechazada');
+        toast.success(aprobar ? 'Solicitud aprobada exitosamente' : 'Solicitud rechazada');
         setSolicitudes(prev => prev.filter(s => s.id !== solicitudSeleccionada.id));
         cerrarModal();
       } else {
-        alert('Error: ' + data.error);
+        toast.error(data.error || 'Error al procesar');
       }
     } catch (error) {
-      alert('Error de conexión');
+      toast.error('Error de conexión');
     } finally {
       setProcesando(false);
     }
@@ -192,7 +205,7 @@ export default function SolicitudesCuentadante() {
       {modalAbierto && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            
+
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#39A900] to-[#007832] text-white">
               <h2 className="text-xl font-bold">Detalle de Solicitud</h2>
@@ -230,7 +243,7 @@ export default function SolicitudesCuentadante() {
                   {['cuentadante_responsable', 'coordinador'].map((rol) => {
                     const firma = firmas.find(f => f.rol_firmante === rol);
                     const nombreRol = rol === 'cuentadante_responsable' ? 'Cuentadante' : 'Coordinador (Aprobación Final)';
-                    
+
                     return (
                       <div key={rol} className="flex items-center justify-between bg-white p-3 rounded-lg">
                         <span className="text-sm font-medium text-gray-700">{nombreRol}</span>

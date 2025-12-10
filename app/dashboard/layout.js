@@ -14,7 +14,7 @@ import { ConfirmProvider } from '@/app/components/ConfirmDialog';
 export default function DashboardLayout({ children }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  
+
   // Inicializar sidebar según tamaño de pantalla
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -61,13 +61,13 @@ export default function DashboardLayout({ children }) {
       if (data.success) {
         // Actualizar usuario en localStorage
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+
         // Actualizar estado local
         setUser(data.user);
-        
+
         // Redirigir al dashboard principal para mostrar el dashboard del nuevo rol
         router.push('/dashboard');
-        
+
         // Recargar la página para asegurar que todo se actualice correctamente
         setTimeout(() => {
           window.location.reload();
@@ -95,65 +95,69 @@ export default function DashboardLayout({ children }) {
       <ConfirmProvider>
         <div className="min-h-screen bg-gray-50 flex flex-col">
           {/* Header - Responsive */}
-          <header className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white shadow-lg">
-        <div className="px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-              {/* Botón Hamburguesa */}
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-all flex-shrink-0"
-                aria-label="Toggle sidebar"
-              >
-                <svg 
-                  className="w-5 h-5 sm:w-6 sm:h-6" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  {sidebarOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-              <div className="min-w-0">
-                <h1 className="text-base sm:text-xl md:text-2xl font-bold truncate">SENA - Gestión de Bienes</h1>
-                <p className="text-xs sm:text-sm opacity-90 hidden sm:block">Sistema de Control de Activos</p>
+          <header className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white shadow-lg sticky top-0 z-50">
+            <div className="px-4 sm:px-6 py-3">
+              <div className="flex items-center justify-between gap-4">
+                {/* Left Side: Toggle + Logo + Identity */}
+                <div className="flex items-center gap-4">
+                  {/* Botón Hamburguesa */}
+                  <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-all flex-shrink-0 md:hidden"
+                    aria-label="Toggle sidebar"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      {sidebarOpen ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      ) : (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      )}
+                    </svg>
+                  </button>
+
+                  <div className="flex items-center gap-3">
+                    <img
+                      src="https://res.cloudinary.com/dil3rjo71/image/upload/v1763990215/logo-de-Sena-sin-fondo-Blanco-300x300_tlss3c.webp"
+                      alt="SENA Logo"
+                      className="w-10 h-10 object-contain"
+                    />
+                    <div className="hidden sm:block">
+                      <h1 className="text-lg font-bold leading-tight">SENA - Gestión de Bienes</h1>
+                      <p className="text-xs opacity-90 font-medium">Sistema de Control de Activos</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Side: User Info & Controls */}
+                <div className="flex items-center gap-4">
+                  {/* Componente elegante de cambio de rol */}
+                  <RoleSwitcher user={user} onRoleChange={handleCambiarRol} />
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-              <div className="text-right hidden md:block">
-                <p className="text-sm font-semibold">{user.nombre}</p>
-                <p className="text-xs opacity-90">
-                  {user.correo || user.documento}
-                </p>
-              </div>
-              
-              {/* Componente elegante de cambio de rol */}
-              <RoleSwitcher user={user} onRoleChange={handleCambiarRol} />
-            </div>
+          </header>
+
+          {/* Layout: Sidebar + Content */}
+          <div className="flex flex-1 overflow-hidden">
+            {/* Sidebar */}
+            <Sidebar
+              userRole={user.rol}
+              userName={user.nombre}
+              isOpen={sidebarOpen}
+              onToggle={() => setSidebarOpen(!sidebarOpen)}
+            />
+
+            {/* Main Content - aquí se renderiza el children (las páginas) */}
+            <main className="flex-1 overflow-auto">
+              {children}
+            </main>
           </div>
         </div>
-      </header>
-
-      {/* Layout: Sidebar + Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <Sidebar 
-          userRole={user.rol} 
-          userName={user.nombre} 
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
-        
-        {/* Main Content - aquí se renderiza el children (las páginas) */}
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
-      </div>
-    </div>
       </ConfirmProvider>
     </ToastProvider>
   );

@@ -11,6 +11,7 @@
     "setup-db": "node scripts/setup-fresh-database.js",
     "reset-db": "node scripts/reset-database.js",
     "create-users": "node scripts/create-test-users.js",
+    "create-locations": "node scripts/create-test-locations.js",
     "create-data": "node scripts/create-test-data.js"
   },
   "dependencies": {

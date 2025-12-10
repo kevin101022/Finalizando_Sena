@@ -64,41 +64,9 @@ export default function HistorialVigilante() {
     setSolicitudSeleccionada(solicitud);
   };
 
-  const registrarEntrada = async () => {
-    const observacion = await prompt('Observación (opcional):', {
-      title: 'Registrar entrada',
-      placeholder: 'Ingresa una observación...'
-    });
-    
-    const confirmed = await confirm('¿Confirmar registro de entrada (devolución)?', {
-      title: 'Confirmar devolución',
-      confirmText: 'Registrar',
-      type: 'success'
-    });
-    if (!confirmed) return;
+  // Función registrarEntrada eliminada - movida a reingreso/page.js
 
-    try {
-      const res = await fetch(`/api/solicitudes/${solicitudSeleccionada.id}/registrar-entrada`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          documento: user.documento,
-          observacion
-        })
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        toast.success('Entrada registrada exitosamente');
-        setSolicitudSeleccionada(null);
-        fetchHistorial();
-      } else {
-        toast.error(data.error || 'Error al registrar entrada');
-      }
-    } catch (error) {
-      toast.error('Error de conexión');
-    }
-  };
+  const nada = () => { };
 
   if (!user) {
     return (
@@ -135,14 +103,7 @@ export default function HistorialVigilante() {
           solicitud={solicitudSeleccionada}
           onClose={() => setSolicitudSeleccionada(null)}
         >
-          {(solicitudSeleccionada.estado === 'autorizada' || solicitudSeleccionada.estado === 'en_prestamo') && (
-            <button
-              onClick={registrarEntrada}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              Registrar Entrada
-            </button>
-          )}
+
         </ModalDetalleSolicitud>
       )}
     </div>

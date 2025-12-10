@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PackageIcon, PlusIcon, TrashIcon, CalendarIcon } from '@/app/components/Icons';
 import { useToast } from '@/app/components/Toast';
+import { Button } from '@/app/components/Button';
 import { useConfirm } from '@/app/components/ConfirmDialog';
 
 export default function SolicitarBienes() {
@@ -20,7 +21,7 @@ export default function SolicitarBienes() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroCuentadante, setFiltroCuentadante] = useState('');
   const [searchAmbiente, setSearchAmbiente] = useState('');
-  
+
   const [formData, setFormData] = useState({
     sede_id: '',
     fecha_ini_prestamo: new Date().toISOString().split('T')[0], // Fecha actual por defecto
@@ -102,7 +103,7 @@ export default function SolicitarBienes() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (carrito.length === 0) {
       toast.warning('Debes agregar al menos un bien al carrito');
       return;
@@ -133,7 +134,7 @@ export default function SolicitarBienes() {
       });
 
       const data = await res.json();
-      
+
       if (data.success) {
         toast.success(`${data.solicitudesCreadas} solicitud(es) creada(s) exitosamente`);
         router.push('/dashboard/usuario/solicitudes');
@@ -183,15 +184,15 @@ export default function SolicitarBienes() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Columna izquierda: Bienes Disponibles y Carrito */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Bienes Disponibles */}
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="p-6 border-b border-gray-200 bg-gray-50">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">Bienes Disponibles</h2>
-              
+
               {/* Filtros */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
@@ -324,14 +325,14 @@ export default function SolicitarBienes() {
 
         {/* Columna derecha: Formulario */}
         <div className="lg:col-span-1 space-y-6">
-          
+
           {/* Formulario - Sticky */}
           <div className="bg-white p-6 rounded-xl shadow-md sticky top-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-[#39A900]" />
               Información del Préstamo
             </h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Sede de Destino *</label>
@@ -373,7 +374,7 @@ export default function SolicitarBienes() {
                   {searchAmbiente && !formData.destino && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                       {ambientes
-                        .filter(a => 
+                        .filter(a =>
                           a.nombre.toLowerCase().includes(searchAmbiente.toLowerCase()) ||
                           a.sede_nombre.toLowerCase().includes(searchAmbiente.toLowerCase())
                         )
@@ -461,27 +462,27 @@ export default function SolicitarBienes() {
                     <span className="text-blue-600">ℹ️</span>
                     <span>Se crearán {Object.keys(carritoAgrupado).length} solicitud(es) separadas</span>
                   </div>
-                  <button
+                  <Button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="w-full py-3 bg-[#39A900] text-white rounded-lg font-semibold hover:bg-[#007832] transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                    className="w-full shadow-md"
                   >
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                         Enviando...
                       </span>
                     ) : (
                       'Enviar Solicitud'
                     )}
-                  </button>
+                  </Button>
                 </div>
               )}
             </form>
           </div>
 
         </div>
-        
+
       </div>
     </div>
   );

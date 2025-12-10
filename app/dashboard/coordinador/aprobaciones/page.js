@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/app/components/Toast';
 
 export default function AprobacionesCoordinador() {
   const router = useRouter();
+  const toast = useToast();
   const [user, setUser] = useState(null);
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,11 +77,11 @@ export default function AprobacionesCoordinador() {
         setSelectedSolicitud(null);
         setObservacionRespuesta('');
       } else {
-        alert('Error: ' + (data.error || 'No se pudo actualizar la solicitud'));
+        toast.error('Error: ' + (data.error || 'No se pudo actualizar la solicitud'));
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error de conexión');
+      toast.error('Error de conexión');
     } finally {
       setActionLoading(false);
     }
@@ -99,7 +101,7 @@ export default function AprobacionesCoordinador() {
 
   // Color del badge según estado
   const getStatusColor = (estado) => {
-    switch(estado?.toLowerCase()) {
+    switch (estado?.toLowerCase()) {
       case 'pendiente': return 'bg-yellow-100 text-yellow-800';
       case 'aprobado': return 'bg-green-100 text-green-800';
       case 'rechazado': return 'bg-red-100 text-red-800';
@@ -132,7 +134,7 @@ export default function AprobacionesCoordinador() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
-                 [...Array(3)].map((_, i) => (
+                [...Array(3)].map((_, i) => (
                   <tr key={i}>
                     <td colSpan="6" className="px-6 py-4 text-center">Cargando...</td>
                   </tr>
@@ -192,7 +194,7 @@ export default function AprobacionesCoordinador() {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            
+
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -249,7 +251,7 @@ export default function AprobacionesCoordinador() {
               >
                 Cerrar
               </button>
-              
+
               {selectedSolicitud.estado?.toLowerCase() === 'firmada_cuentadante' && (
                 <>
                   <button

@@ -6,6 +6,7 @@ import ModalDetalleSolicitud from '@/app/components/ModalDetalleSolicitud';
 import TablaSolicitudes from '@/app/components/TablaSolicitudes';
 import { useToast } from '@/app/components/Toast';
 import { useConfirm } from '@/app/components/ConfirmDialog';
+import { Button } from '@/app/components/Button';
 
 export default function SolicitudesPendientesCuentadante() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function SolicitudesPendientesCuentadante() {
       setLoading(true);
       const res = await fetch(`/api/solicitudes/cuentadante?documento=${user.documento}&tipo=pendientes`);
       const data = await res.json();
-      
+
       if (data.success) {
         setSolicitudes(data.solicitudes);
       }
@@ -63,7 +64,7 @@ export default function SolicitudesPendientesCuentadante() {
         placeholder: aprobar ? 'Ingresa una observación...' : 'Debes indicar el motivo...'
       }
     );
-    
+
     if (!aprobar && !observacion) {
       toast.warning('Debes indicar el motivo del rechazo');
       return;
@@ -133,18 +134,17 @@ export default function SolicitudesPendientesCuentadante() {
         >
           {solicitudSeleccionada.estado === 'pendiente' && (
             <>
-              <button
+              <Button
                 onClick={() => handleFirmar(false)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                variant="danger"
               >
                 Rechazar
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => handleFirmar(true)}
-                className="px-4 py-2 bg-[#39A900] text-white rounded-lg hover:bg-[#2e8b00] transition"
               >
                 Firmar
-              </button>
+              </Button>
             </>
           )}
         </ModalDetalleSolicitud>

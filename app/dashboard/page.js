@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  AlertIcon, 
-  CheckCircleIcon, 
+import {
+  AlertIcon,
+  CheckCircleIcon,
   TrendingUpIcon,
   PackageIcon,
   UsersIcon,
@@ -29,7 +29,7 @@ const DashboardCuentadante = () => {
 
         const response = await fetch(`/api/dashboard/stats?rol=cuentadante&documento=${userData.documento}`);
         const data = await response.json();
-        
+
         if (data.success) {
           setStats(data.stats);
         }
@@ -45,29 +45,25 @@ const DashboardCuentadante = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <StatCard 
-        title="Bienes Bajo Mi Cuidado" 
-        value={loading ? '...' : stats.bienesACargo.toString()} 
-        color="from-[#39A900] to-[#007832]"
-        icon={<PackageIcon className="w-10 h-10" />}
+      <StatCard
+        title="Bienes Bajo Mi Cuidado"
+        value={loading ? '...' : stats.bienesACargo.toString()}
+        icon={<PackageIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Bienes Disponibles para Préstamo" 
-        value={loading ? '...' : stats.bienesDisponibles.toString()} 
-        color="from-blue-500 to-blue-600"
-        icon={<CheckCircleIcon className="w-10 h-10" />}
+      <StatCard
+        title="Bienes Disponibles para Préstamo"
+        value={loading ? '...' : stats.bienesDisponibles.toString()}
+        icon={<CheckCircleIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Bienes En Préstamo" 
-        value={loading ? '...' : stats.bienesEnPrestamo.toString()} 
-        color="from-purple-500 to-purple-600"
-        icon={<AlertIcon className="w-10 h-10" />}
+      <StatCard
+        title="Bienes En Préstamo"
+        value={loading ? '...' : stats.bienesEnPrestamo.toString()}
+        icon={<AlertIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Solicitudes Pendientes" 
-        value={loading ? '...' : stats.solicitudesPendientes.toString()} 
-        color="from-orange-500 to-orange-600"
-        icon={<ClipboardIcon className="w-10 h-10" />}
+      <StatCard
+        title="Solicitudes Pendientes"
+        value={loading ? '...' : stats.solicitudesPendientes.toString()}
+        icon={<ClipboardIcon className="w-8 h-8" />}
       />
     </div>
   );
@@ -101,23 +97,20 @@ const DashboardAdministrador = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <StatCard 
-        title="Total Solicitudes" 
-        value={loading ? '...' : stats.totalSolicitudes.toString()} 
-        color="from-[#39A900] to-[#007832]"
-        icon={<ClipboardIcon className="w-10 h-10" />}
+      <StatCard
+        title="Total Solicitudes"
+        value={loading ? '...' : stats.totalSolicitudes.toString()}
+        icon={<ClipboardIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Usuarios en el Sistema" 
-        value={loading ? '...' : stats.totalUsuarios.toString()} 
-        color="from-blue-500 to-blue-600"
-        icon={<UsersIcon className="w-10 h-10" />}
+      <StatCard
+        title="Usuarios en el Sistema"
+        value={loading ? '...' : stats.totalUsuarios.toString()}
+        icon={<UsersIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Solicitudes Aprobadas" 
-        value={loading ? '...' : stats.solicitudesAprobadas.toString()} 
-        color="from-purple-500 to-purple-600"
-        icon={<CheckCircleIcon className="w-10 h-10" />}
+      <StatCard
+        title="Solicitudes Aprobadas"
+        value={loading ? '...' : stats.solicitudesAprobadas.toString()}
+        icon={<CheckCircleIcon className="w-8 h-8" />}
       />
     </div>
   );
@@ -151,23 +144,20 @@ const DashboardAlmacenista = ({ router }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <StatCard 
-        title="Bienes Registrados" 
-        value={loading ? '...' : stats.totalBienes.toString()} 
-        color="from-[#39A900] to-[#007832]"
-        icon={<PackageIcon className="w-10 h-10" />}
+      <StatCard
+        title="Bienes Registrados"
+        value={loading ? '...' : stats.totalBienes.toString()}
+        icon={<PackageIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Sin Asignar" 
-        value={loading ? '...' : stats.bienesSinAsignar.toString()} 
-        color="from-orange-500 to-orange-600"
-        icon={<AlertIcon className="w-10 h-10" />}
+      <StatCard
+        title="Sin Asignar"
+        value={loading ? '...' : stats.bienesSinAsignar.toString()}
+        icon={<AlertIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Cuentadantes Activos" 
-        value={loading ? '...' : stats.cuentadantesActivos.toString()} 
-        color="from-blue-500 to-blue-600"
-        icon={<UsersIcon className="w-10 h-10" />}
+      <StatCard
+        title="Cuentadantes Activos"
+        value={loading ? '...' : stats.cuentadantesActivos.toString()}
+        icon={<UsersIcon className="w-8 h-8" />}
       />
     </div>
   );
@@ -201,23 +191,20 @@ const DashboardVigilante = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <StatCard 
-        title="Pendientes de Autorización" 
-        value={loading ? '...' : stats.pendientesAutorizacion.toString()} 
-        color="from-orange-500 to-orange-600"
-        icon={<AlertIcon className="w-10 h-10" />}
+      <StatCard
+        title="Pendientes de Autorización"
+        value={loading ? '...' : stats.pendientesAutorizacion.toString()}
+        icon={<AlertIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="En Préstamo" 
-        value={loading ? '...' : stats.enPrestamo.toString()} 
-        color="from-blue-500 to-blue-600"
-        icon={<PackageIcon className="w-10 h-10" />}
+      <StatCard
+        title="En Préstamo"
+        value={loading ? '...' : stats.enPrestamo.toString()}
+        icon={<PackageIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Devueltos Hoy" 
-        value={loading ? '...' : stats.devueltos.toString()} 
-        color="from-[#007832] to-[#39A900]"
-        icon={<CheckCircleIcon className="w-10 h-10" />}
+      <StatCard
+        title="Devueltos Hoy"
+        value={loading ? '...' : stats.devueltos.toString()}
+        icon={<CheckCircleIcon className="w-8 h-8" />}
       />
     </div>
   );
@@ -239,7 +226,7 @@ const DashboardUsuario = () => {
 
         const response = await fetch(`/api/dashboard/stats?rol=usuario&documento=${userData.documento}`);
         const data = await response.json();
-        
+
         if (data.success) {
           setStats(data.stats);
         }
@@ -255,23 +242,20 @@ const DashboardUsuario = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <StatCard 
-        title="Solicitudes Activas" 
-        value={loading ? '...' : stats.solicitudesActivas.toString()} 
-        color="from-blue-500 to-blue-600"
-        icon={<AlertIcon className="w-10 h-10" />}
+      <StatCard
+        title="Solicitudes Activas"
+        value={loading ? '...' : stats.solicitudesActivas.toString()}
+        icon={<AlertIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Aprobadas" 
-        value={loading ? '...' : stats.solicitudesAprobadas.toString()} 
-        color="from-[#007832] to-[#39A900]"
-        icon={<CheckCircleIcon className="w-10 h-10" />}
+      <StatCard
+        title="Aprobadas"
+        value={loading ? '...' : stats.solicitudesAprobadas.toString()}
+        icon={<CheckCircleIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Rechazadas" 
-        value={loading ? '...' : stats.solicitudesRechazadas.toString()} 
-        color="from-red-500 to-red-600"
-        icon={<ClipboardIcon className="w-10 h-10" />}
+      <StatCard
+        title="Rechazadas"
+        value={loading ? '...' : stats.solicitudesRechazadas.toString()}
+        icon={<ClipboardIcon className="w-8 h-8" />}
       />
     </div>
   );
@@ -305,39 +289,37 @@ const DashboardCoordinador = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <StatCard 
-        title="Pendientes de Firmar" 
-        value={loading ? '...' : stats.solicitudesPendientes.toString()} 
-        color="from-orange-500 to-orange-600"
-        icon={<AlertIcon className="w-10 h-10" />}
+      <StatCard
+        title="Pendientes de Firmar"
+        value={loading ? '...' : stats.solicitudesPendientes.toString()}
+        icon={<AlertIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Aprobadas" 
-        value={loading ? '...' : stats.solicitudesAprobadas.toString()} 
-        color="from-[#007832] to-[#39A900]"
-        icon={<CheckCircleIcon className="w-10 h-10" />}
+      <StatCard
+        title="Aprobadas"
+        value={loading ? '...' : stats.solicitudesAprobadas.toString()}
+        icon={<CheckCircleIcon className="w-8 h-8" />}
       />
-      <StatCard 
-        title="Rechazadas" 
-        value={loading ? '...' : stats.solicitudesRechazadas.toString()} 
-        color="from-red-500 to-red-600"
-        icon={<ClipboardIcon className="w-10 h-10" />}
+      <StatCard
+        title="Rechazadas"
+        value={loading ? '...' : stats.solicitudesRechazadas.toString()}
+        icon={<ClipboardIcon className="w-8 h-8" />}
       />
     </div>
   );
 };
 
-// Componente de tarjeta de estadística con ícono
-const StatCard = ({ title, value, color, icon }) => (
-  <div className={`bg-gradient-to-br ${color} rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow`}>
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm opacity-90">{title}</p>
-        <p className="text-3xl font-bold mt-2">{value}</p>
-      </div>
-      <div className="opacity-80">
+// Updated StatCard - White Design with Green Accents (SENA Style)
+const StatCard = ({ title, value, icon }) => (
+  <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+    <div className="flex items-center justify-between mb-4">
+      <div className="p-3 bg-[#39A900]/5 rounded-xl group-hover:bg-[#39A900]/10 transition-colors text-[#39A900]">
         {icon}
       </div>
+      <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-full">Actual</span>
+    </div>
+    <div>
+      <h3 className="text-gray-500 text-sm font-medium mb-1">{title}</h3>
+      <p className="text-gray-900 text-3xl font-bold tracking-tight">{value}</p>
     </div>
   </div>
 );
@@ -356,7 +338,7 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-[#F6F7F8]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#39A900]"></div>
       </div>
     );
@@ -382,15 +364,10 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="px-6 py-8">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">
-          Bienvenido, {user.nombre}
-        </h2>
-        <p className="text-gray-600">Panel de control - {user.rol}</p>
-      </div>
-
-      {renderDashboard()}
+    <div className="min-h-screen bg-[#F6F7F8]">
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {renderDashboard()}
+      </main>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useToast } from '@/app/components/Toast';
 import { useConfirm } from '@/app/components/ConfirmDialog';
 import ModalDetalleSolicitud from '@/app/components/ModalDetalleSolicitud';
 import TablaSolicitudes from '@/app/components/TablaSolicitudes';
+import { Button } from '@/app/components/Button';
 
 export default function AutorizarSalidas() {
   const router = useRouter();
@@ -58,7 +59,7 @@ export default function AutorizarSalidas() {
       title: 'Autorizar salida',
       placeholder: 'Ingresa una observación...'
     });
-    
+
     const confirmed = await confirm('¿Confirmar autorización de salida?', {
       title: 'Confirmar autorización',
       confirmText: 'Autorizar',
@@ -126,12 +127,11 @@ export default function AutorizarSalidas() {
           onClose={() => setSolicitudSeleccionada(null)}
         >
           {solicitudSeleccionada.estado === 'aprobada' && (
-            <button
+            <Button
               onClick={autorizarSalida}
-              className="px-4 py-2 bg-[#39A900] text-white rounded-lg hover:bg-[#2e8b00] transition"
             >
               Autorizar Salida
-            </button>
+            </Button>
           )}
         </ModalDetalleSolicitud>
       )}

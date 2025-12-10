@@ -5,7 +5,7 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
-    
+
     // Query optimizada para la nueva estructura
     // Obtenemos el estado más reciente y la asignación más reciente mediante subconsultas
     let sqlQuery = `
@@ -94,7 +94,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    
+
     // Validar campos requeridos
     const requiredFields = ['placa', 'descripcion', 'marca_id', 'costo'];
     for (const field of requiredFields) {
@@ -135,7 +135,7 @@ export async function POST(request) {
 
       // 2. Insertar estado inicial en estado_bien
       const estadoInicial = body.estado_inicial || 'buen_estado';
-      
+
       await query(
         'INSERT INTO estado_bien (bien_id, estado) VALUES ($1, $2)',
         [nuevoBien.id, estadoInicial]
@@ -156,7 +156,7 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Error al registrar bien:', error);
-    
+
     if (error.code === '23505') { // Unique violation
       return NextResponse.json(
         { success: false, error: 'La placa ya existe en el sistema' },
@@ -166,6 +166,113 @@ export async function POST(request) {
 
     return NextResponse.json(
       { success: false, error: 'Error al registrar el bien', details: error.message },
+      { status: 500 }
+    );
+  }
+}
+export async function PUT(request) {
+  try {
+    const body = await request.json();
+
+    // Validar ID
+    if (!body.id) {
+      return NextResponse.json(
+        { success: false, error: 'ID del bien requerido' },
+        { status: 400 }
+      );
+    }
+
+    // Validar campos requeridos mínimos
+    if (!body.placa || !body.descripcion || !body.marca_id || !body.costo) {
+      return NextResponse.json(
+        { success: false, error: 'Faltan campos obligatorios' },
+        { status: 400 }
+      );
+    }
+
+    await query('BEGIN');
+
+    try {
+      // 1. Actualizar datos básicos
+      const updateQuery = `
+        UPDATE bienes 
+        SET 
+          placa = $1,
+          descripcion = $2,
+          modelo = $3,
+          marca_id = $4,
+          serial = $5,
+          costo = $6,
+          fecha_compra = $7,
+          vida_util = $8
+        WHERE id = $9
+        RETURNING *
+      `;
+
+      const values = [
+        body.placa,
+        body.descripcion,
+        body.modelo || null,
+        parseInt(body.marca_id),
+        body.serial || null,
+        parseFloat(body.costo),
+        body.fecha_compra || null,
+        body.vida_util ? parseInt(body.vida_util) : null,
+        body.id
+      ];
+
+      const result = await query(updateQuery, values);
+
+      if (result.rowCount === 0) {
+        await query('ROLLBACK');
+        return NextResponse.json(
+          { success: false, error: 'Bien no encontrado' },
+          { status: 404 }
+        );
+      }
+
+      // 2. Verificar si el estado cambió para registrar historial
+      if (body.estado) {
+        // Obtener último estado
+        const lastStateQuery = `
+          SELECT estado FROM estado_bien 
+          WHERE bien_id = $1 
+          ORDER BY fecha_registro DESC LIMIT 1
+        `;
+        const lastStateRes = await query(lastStateQuery, [body.id]);
+        const currentState = lastStateRes.rows[0]?.estado;
+
+        if (currentState !== body.estado) {
+          await query(
+            'INSERT INTO estado_bien (bien_id, estado) VALUES ($1, $2)',
+            [body.id, body.estado]
+          );
+        }
+      }
+
+      await query('COMMIT');
+
+      return NextResponse.json({
+        success: true,
+        bien: result.rows[0],
+        message: 'Bien actualizado correctamente'
+      });
+
+    } catch (err) {
+      await query('ROLLBACK');
+      throw err;
+    }
+
+  } catch (error) {
+    console.error('Error updating bien:', error);
+    if (error.code === '23505') {
+      return NextResponse.json(
+        { success: false, error: 'La placa ya está registrada en otro bien' },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: 'Error al actualizar el bien' },
       { status: 500 }
     );
   }
