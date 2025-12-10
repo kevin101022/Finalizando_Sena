@@ -30,7 +30,8 @@ export async function GET(request) {
           p.nombres || ' ' || p.apellidos as solicitante_nombre,
           p.documento as solicitante_documento,
           sed.nombre as sede_nombre,
-          (SELECT COUNT(*) FROM detalle_solicitud WHERE solicitud_id = s.id) as cantidad_bienes
+          (SELECT COUNT(*) FROM detalle_solicitud WHERE solicitud_id = s.id) as cantidad_bienes,
+          (SELECT COUNT(*) FROM firma_solicitud WHERE solicitud_id = s.id AND firma = true) as firmas_completadas
         FROM solicitudes s
         JOIN persona p ON s.doc_persona = p.documento
         LEFT JOIN sedes sed ON s.sede_id = sed.id
@@ -51,11 +52,19 @@ export async function GET(request) {
           p.documento as solicitante_documento,
           sed.nombre as sede_nombre,
           (SELECT COUNT(*) FROM detalle_solicitud WHERE solicitud_id = s.id) as cantidad_bienes,
-          fs.fecha_firmado as fecha_salida
+          (SELECT COUNT(*) FROM firma_solicitud WHERE solicitud_id = s.id AND firma = true) as firmas_completadas,
+          fs_salida.fecha_firmado as fecha_salida
         FROM solicitudes s
         JOIN persona p ON s.doc_persona = p.documento
         LEFT JOIN sedes sed ON s.sede_id = sed.id
-        LEFT JOIN firma_solicitud fs ON s.id = fs.solicitud_id AND fs.rol_usuario = 'vigilante_salida'
+        LEFT JOIN LATERAL (
+          SELECT fecha_firmado 
+          FROM firma_solicitud 
+          WHERE solicitud_id = s.id 
+          AND (rol_usuario = 'vigilante' OR rol_usuario = 'vigilante_salida')
+          ORDER BY fecha_firmado ASC, id ASC
+          LIMIT 1
+        ) fs_salida ON TRUE
         WHERE s.estado IN ('autorizada', 'en_prestamo')
         ORDER BY s.id DESC
       `;
@@ -73,13 +82,29 @@ export async function GET(request) {
           p.documento as solicitante_documento,
           sed.nombre as sede_nombre,
           (SELECT COUNT(*) FROM detalle_solicitud WHERE solicitud_id = s.id) as cantidad_bienes,
+          (SELECT COUNT(*) FROM firma_solicitud WHERE solicitud_id = s.id AND firma = true) as firmas_completadas,
           fs_salida.fecha_firmado as fecha_salida,
           fs_entrada.fecha_firmado as fecha_entrada
         FROM solicitudes s
         JOIN persona p ON s.doc_persona = p.documento
         LEFT JOIN sedes sed ON s.sede_id = sed.id
-        LEFT JOIN firma_solicitud fs_salida ON s.id = fs_salida.solicitud_id AND fs_salida.rol_usuario = 'vigilante_salida'
-        LEFT JOIN firma_solicitud fs_entrada ON s.id = fs_entrada.solicitud_id AND fs_entrada.rol_usuario = 'vigilante_entrada'
+        LEFT JOIN LATERAL (
+          SELECT fecha_firmado, id 
+          FROM firma_solicitud 
+          WHERE solicitud_id = s.id 
+          AND (rol_usuario = 'vigilante' OR rol_usuario = 'vigilante_salida')
+          ORDER BY fecha_firmado ASC, id ASC
+          LIMIT 1
+        ) fs_salida ON TRUE
+        LEFT JOIN LATERAL (
+          SELECT fecha_firmado 
+          FROM firma_solicitud 
+          WHERE solicitud_id = s.id 
+          AND (rol_usuario = 'vigilante' OR rol_usuario = 'vigilante_entrada')
+          AND id <> fs_salida.id
+          ORDER BY fecha_firmado DESC, id DESC
+          LIMIT 1
+        ) fs_entrada ON TRUE
         WHERE s.estado IN ('autorizada', 'en_prestamo', 'devuelto')
         ORDER BY s.id DESC
       `;

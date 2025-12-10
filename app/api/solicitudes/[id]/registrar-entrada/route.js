@@ -59,14 +59,17 @@ export async function POST(request, { params }) {
         );
       }
 
-      // 2. Verificar que no haya una firma de entrada previa
-      const firmaExistente = await query(
+      // 2. Verificar si ya existe firma de entrada
+      // Buscamos cuántas firmas de vigilante hay.
+      // - 1 firma: Es la de salida. Procedemos con entrada.
+      // - 2 firmas: Ya tiene salida y entrada. Error.
+      const firmasExistentes = await query(
         `SELECT id FROM firma_solicitud 
-         WHERE solicitud_id = $1 AND rol_usuario = 'vigilante_entrada'`,
+         WHERE solicitud_id = $1 AND rol_usuario = 'vigilante'`,
         [parseInt(id)]
       );
 
-      if (firmaExistente.rows.length > 0) {
+      if (firmasExistentes.rows.length >= 2) {
         await query('ROLLBACK');
         return NextResponse.json(
           { success: false, error: 'La entrada ya fue registrada' },
@@ -74,10 +77,21 @@ export async function POST(request, { params }) {
         );
       }
 
+      // Opcional: Verificar que exista al menos 1 (la salida)
+      if (firmasExistentes.rows.length === 0) {
+        // Esto sería raro si el estado es 'autorizada', pero por seguridad
+        await query('ROLLBACK');
+        return NextResponse.json(
+          { success: false, error: 'No se ha registrado la salida previamente' },
+          { status: 400 }
+        );
+      }
+
       // 3. Registrar firma de entrada del vigilante
+      // Se guarda como 'vigilante'. Será la segunda en orden cronológico.
       await query(`
         INSERT INTO firma_solicitud (solicitud_id, rol_usuario, doc_persona, firma, observacion)
-        VALUES ($1, 'vigilante_entrada', $2, true, $3)
+        VALUES ($1, 'vigilante', $2, true, $3)
       `, [parseInt(id), documento, observacion || 'Entrada registrada']);
 
       // 4. Actualizar estado de la solicitud

@@ -134,7 +134,7 @@ export default function Register() {
             />
           </div>
 
-          <div className="relative w-full max-w-3xl bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-8 max-h-[90vh] overflow-y-auto border border-white/20 scrollbar-hide">
+          <div className="relative w-full max-w-4xl bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-6 md:p-8 max-h-[90vh] overflow-y-auto border border-white/20 scrollbar-hide">
             {/* Back Button inside Form */}
             <div className="mb-4 md:absolute md:top-6 md:left-6 md:mb-0">
               <Link
@@ -164,7 +164,7 @@ export default function Register() {
               )}
 
               {/* Grid de 2 columnas para todos los campos */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Tipo de Documento */}
                 <div>
                   <label htmlFor="tipo_doc" className="block text-sm font-bold text-gray-700 mb-2">
@@ -176,7 +176,7 @@ export default function Register() {
                     value={formData.tipo_doc}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#39A900] focus:border-transparent outline-none transition text-gray-900 font-medium"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#39A900] focus:border-transparent outline-none transition text-gray-900 font-medium placeholder:font-normal"
                   >
                     <option value="CC">Cédula de Ciudadanía</option>
                     <option value="CE">Cédula de Extranjería</option>
@@ -332,7 +332,7 @@ export default function Register() {
             </form>
 
             {/* Footer */}
-            <div className="mt-6 text-center border-t border-gray-100 pt-6">
+            <div className="mt-4 text-center border-t border-gray-100 pt-4">
               <p className="text-sm text-gray-600">
                 ¿Ya tienes cuenta?{' '}
                 <Link href="/" className="text-[#007832] hover:text-[#39A900] font-bold transition ml-1">

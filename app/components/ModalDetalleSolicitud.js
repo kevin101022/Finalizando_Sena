@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { getEstadoBadge, getEstadoTexto, formatDate } from '@/lib/solicitudUtils';
 
-export default function ModalDetalleSolicitud({ 
-  solicitud, 
-  onClose, 
+export default function ModalDetalleSolicitud({
+  solicitud,
+  onClose,
   children // Para botones personalizados según el rol
 }) {
   const [detalles, setDetalles] = useState([]);
@@ -25,10 +25,10 @@ export default function ModalDetalleSolicitud({
         fetch(`/api/solicitudes/${solicitud.id}/detalles`),
         fetch(`/api/solicitudes/${solicitud.id}/firmas`)
       ]);
-      
+
       const dataDetalles = await resDetalles.json();
       const dataFirmas = await resFirmas.json();
-      
+
       if (dataDetalles.success) {
         setDetalles(dataDetalles.detalles);
       }
@@ -59,8 +59,8 @@ export default function ModalDetalleSolicitud({
             <h3 className="text-2xl font-bold">Solicitud #{solicitud.id}</h3>
             <p className="text-sm text-white/80 mt-1">{solicitud.solicitante_nombre}</p>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200 hover:rotate-90"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,9 +146,16 @@ export default function ModalDetalleSolicitud({
                     }[rol];
 
                     return (
-                      <div key={rol} className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
-                        <span className="text-sm font-semibold text-gray-700">{nombreRol}</span>
-                        <span className={`text-sm font-bold ${estado.color}`}>{estado.text}</span>
+                      <div key={rol} className="flex flex-col bg-white p-4 rounded-lg shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-700">{nombreRol}</span>
+                          <span className={`text-sm font-bold ${estado.color}`}>{estado.text}</span>
+                        </div>
+                        {firma && firma.observacion && (
+                          <div className="mt-2 text-sm text-gray-700 italic border-t border-gray-200 pt-2">
+                            Nota: {firma.observacion}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

@@ -200,10 +200,16 @@ export async function GET(request) {
       const devueltosQuery = `
         SELECT COUNT(*) as total
         FROM solicitudes s
-        JOIN firma_solicitud fs ON s.id = fs.solicitud_id
+        JOIN LATERAL (
+          SELECT fecha_firmado
+          FROM firma_solicitud
+          WHERE solicitud_id = s.id 
+          AND (rol_usuario = 'vigilante' OR rol_usuario = 'vigilante_entrada')
+          ORDER BY fecha_firmado DESC
+          LIMIT 1
+        ) last_sign ON TRUE
         WHERE s.estado = 'devuelto'
-          AND fs.rol_usuario = 'vigilante_entrada'
-          AND DATE(fs.fecha_firmado) = CURRENT_DATE
+          AND DATE(last_sign.fecha_firmado) = CURRENT_DATE
       `;
       const devueltosResult = await query(devueltosQuery);
       const devueltos = parseInt(devueltosResult.rows[0].total);
@@ -259,10 +265,10 @@ export async function GET(request) {
   } catch (error) {
     console.error('Error al obtener estadísticas del dashboard:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Error al obtener las estadísticas',
-        message: error.message 
+        message: error.message
       },
       { status: 500 }
     );

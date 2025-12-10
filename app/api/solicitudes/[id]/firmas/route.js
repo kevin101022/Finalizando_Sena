@@ -33,9 +33,22 @@ export async function GET(request, { params }) {
       ORDER BY fs.fecha_firmado ASC
     `, [parseInt(id)]);
 
+    // Transformar roles de vigilante para compatibilidad con Frontend
+    let vigilanteCount = 0;
+    const firmasTransformadas = result.rows.map(firma => {
+      if (firma.rol_usuario === 'vigilante') {
+        vigilanteCount++;
+        return {
+          ...firma,
+          rol_usuario: vigilanteCount === 1 ? 'vigilante_salida' : 'vigilante_entrada'
+        };
+      }
+      return firma;
+    });
+
     return NextResponse.json({
       success: true,
-      firmas: result.rows
+      firmas: firmasTransformadas
     });
 
   } catch (error) {

@@ -59,10 +59,10 @@ export async function POST(request, { params }) {
         );
       }
 
-      // 2. Verificar que no haya una firma de salida previa
+      // 2. Verificar que no haya una firma de vigilante previa (salida)
       const firmaExistente = await query(
         `SELECT id FROM firma_solicitud 
-         WHERE solicitud_id = $1 AND rol_usuario = 'vigilante_salida'`,
+         WHERE solicitud_id = $1 AND rol_usuario = 'vigilante'`,
         [parseInt(id)]
       );
 
@@ -75,9 +75,10 @@ export async function POST(request, { params }) {
       }
 
       // 3. Registrar firma de salida del vigilante
+      // Se guarda como 'vigilante' genérico. Por orden cronológico, la primera es salida.
       await query(`
         INSERT INTO firma_solicitud (solicitud_id, rol_usuario, doc_persona, firma, observacion)
-        VALUES ($1, 'vigilante_salida', $2, true, $3)
+        VALUES ($1, 'vigilante', $2, true, $3)
       `, [parseInt(id), documento, observacion || 'Salida autorizada']);
 
       // 4. Actualizar estado de la solicitud

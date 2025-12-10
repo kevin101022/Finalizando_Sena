@@ -166,19 +166,7 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
           </ul>
         </nav>
 
-        {/* Footer del Sidebar */}
-        <div className="p-4 border-t border-white/20">
-          <button
-            onClick={() => {
-              localStorage.removeItem('user');
-              router.push('/');
-            }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
-          >
-            <DoorIcon className="w-6 h-6" />
-            <span className="font-medium whitespace-nowrap">Cerrar Sesión</span>
-          </button>
-        </div>
+
       </div>
     </aside>
   );

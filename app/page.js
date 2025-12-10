@@ -157,9 +157,6 @@ export default function Login() {
                   />
                   <span className="ml-2 text-sm text-gray-600 font-medium">Recordarme</span>
                 </label>
-                <a href="#" className="text-sm text-[#007832] hover:text-[#39A900] transition font-semibold">
-                  ¿Olvidaste tu contraseña?
-                </a>
               </div>
 
               {/* Botón de login */}
