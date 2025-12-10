@@ -188,7 +188,7 @@ Finalizando_Sena/
 
 - **`FLUJO_SISTEMA.md`** - Flujo detallado del sistema de solicitudes
 - **`database_schema.sql`** - Esquema completo de la base de datos
-- **`ENV_TEMPLATE.txt`** - Plantilla de variables de entorno
+- **`database_schema.sql`** - Esquema completo de la base de datos
 
 ## 🔧 Configuración de Producción
 
@@ -213,12 +213,12 @@ NODE_ENV=production
 
 1. **Build de producción:**
 ```bash
-npm run build
+pnpm run build
 ```
 
 2. **Inicia el servidor:**
 ```bash
-npm start
+pnpm start
 ```
 
 ## 🐛 Solución de Problemas
