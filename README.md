@@ -254,8 +254,6 @@ Este proyecto fue desarrollado para el **SENA (Servicio Nacional de Aprendizaje)
 
 ## 👨‍💻 Autor
 
-**Neyger Serrano**
+**ADSO 3115418**
 
----
 
-⭐ Si este proyecto te fue útil, considera darle una estrella en GitHub
