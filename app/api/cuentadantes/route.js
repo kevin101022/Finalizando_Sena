@@ -11,6 +11,7 @@ export async function GET() {
         p.apellidos,
         p.nombres || ' ' || p.apellidos as nombre,
         p.correo as email,
+        rp.sede_id,
         s.nombre as sede_nombre
       FROM persona p
       INNER JOIN rol_persona rp ON p.documento = rp.doc_persona

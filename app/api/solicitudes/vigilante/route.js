@@ -13,9 +13,28 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const tipo = searchParams.get('tipo') || 'pendientes';
+    const documento = searchParams.get('documento');
+
+    if (!documento) {
+      return NextResponse.json({ success: true, solicitudes: [] });
+    }
+
+    // Obtener Sede del Vigilante
+    const sedeResult = await query(`
+      SELECT rp.sede_id 
+      FROM rol_persona rp
+      JOIN rol r ON rp.rol_id = r.id
+      WHERE rp.doc_persona = $1 AND r.nombre = 'vigilante'
+    `, [documento]);
+
+    const sedeId = sedeResult.rows[0]?.sede_id;
+
+    if (!sedeId) {
+      return NextResponse.json({ success: true, solicitudes: [] });
+    }
 
     let sqlQuery = '';
-    let params = [];
+    let params = [sedeId]; // $1 será la sede
 
     if (tipo === 'pendientes') {
       // Solicitudes aprobadas esperando autorización de salida
@@ -35,7 +54,7 @@ export async function GET(request) {
         FROM solicitudes s
         JOIN persona p ON s.doc_persona = p.documento
         LEFT JOIN sedes sed ON s.sede_id = sed.id
-        WHERE s.estado = 'aprobada'
+        WHERE s.estado = 'aprobada' AND s.sede_id = $1
         ORDER BY s.id DESC
       `;
     } else if (tipo === 'autorizadas') {
@@ -65,7 +84,7 @@ export async function GET(request) {
           ORDER BY fecha_firmado ASC, id ASC
           LIMIT 1
         ) fs_salida ON TRUE
-        WHERE s.estado IN ('autorizada', 'en_prestamo')
+        WHERE s.estado IN ('autorizada', 'en_prestamo') AND s.sede_id = $1
         ORDER BY s.id DESC
       `;
     } else if (tipo === 'historial') {
@@ -105,7 +124,7 @@ export async function GET(request) {
           ORDER BY fecha_firmado DESC, id DESC
           LIMIT 1
         ) fs_entrada ON TRUE
-        WHERE s.estado IN ('autorizada', 'en_prestamo', 'devuelto')
+        WHERE s.estado IN ('autorizada', 'en_prestamo', 'devuelto') AND s.sede_id = $1
         ORDER BY s.id DESC
       `;
     }

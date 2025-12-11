@@ -45,7 +45,7 @@ export default function ReingresoVigilante() {
             // Ideally, reingreso is for items that HAVE LEFT and are coming back.
             // So status should be 'en_prestamo'.
 
-            const res = await fetch('/api/solicitudes/vigilante?tipo=historial');
+            const res = await fetch(`/api/solicitudes/vigilante?tipo=historial&documento=${user.documento}`);
             const data = await res.json();
             if (data.success) {
                 // Filter specifically for items that are currently OUT (en_prestamo)

@@ -9,6 +9,7 @@ export default function GestionUsuarios() {
   const router = useRouter();
   const toast = useToast();
   const [usuarios, setUsuarios] = useState([]);
+  const [usuariosFiltrados, setUsuariosFiltrados] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
@@ -17,11 +18,47 @@ export default function GestionUsuarios() {
   const [sedes, setSedes] = useState([]);
   const [sedeSeleccionada, setSedeSeleccionada] = useState(null);
   const [rolUsuarioId, setRolUsuarioId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
+  // Estados para filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filtroRol, setFiltroRol] = useState('');
+  const [filtroSede, setFiltroSede] = useState('');
 
   // Cargar usuarios y roles al montar
   useEffect(() => {
     cargarDatos();
   }, []);
+
+  // Filtrar usuarios cuando cambian los filtros
+  useEffect(() => {
+    let filtered = usuarios;
+
+    // Filtro por texto (nombre, email, documento)
+    if (searchTerm) {
+      filtered = filtered.filter(usuario =>
+        usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        usuario.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        usuario.id.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filtro por rol
+    if (filtroRol) {
+      filtered = filtered.filter(usuario =>
+        usuario.roles.some(rol => rol.nombre === filtroRol)
+      );
+    }
+
+    // Filtro por sede
+    if (filtroSede) {
+      filtered = filtered.filter(usuario =>
+        usuario.roles.some(rol => rol.sede_id === parseInt(filtroSede))
+      );
+    }
+
+    setUsuariosFiltrados(filtered);
+  }, [searchTerm, filtroRol, filtroSede, usuarios]);
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -40,6 +77,7 @@ export default function GestionUsuarios() {
 
       if (dataUsuarios.success && dataRoles.success && dataSedes.success) {
         setUsuarios(dataUsuarios.usuarios);
+        setUsuariosFiltrados(dataUsuarios.usuarios);
         setRoles(dataRoles.roles);
         setSedes(dataSedes.sedes);
 
@@ -75,6 +113,15 @@ export default function GestionUsuarios() {
     if (usuario.roles.length > 0 && usuario.roles[0].sede_id) {
       setSedeSeleccionada(usuario.roles[0].sede_id);
     }
+    setShowModal(true);
+  };
+
+  const cerrarModal = () => {
+    setShowModal(false);
+    setUsuarioSeleccionado(null);
+    setRolesSeleccionados([]);
+    setRolPrincipal(null);
+    setSedeSeleccionada(null);
   };
 
   const toggleRol = (rolId) => {
@@ -153,8 +200,7 @@ export default function GestionUsuarios() {
 
       if (dataSede.success) {
         toast.success('Roles y sede actualizados correctamente');
-        setUsuarioSeleccionado(null);
-        setSedeSeleccionada(null);
+        cerrarModal();
         cargarDatos(); // Recargar la lista
       } else {
         toast.error(dataSede.error || 'Error al actualizar sede');
@@ -177,141 +223,277 @@ export default function GestionUsuarios() {
     <div className="px-6 py-8">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Gestión de Usuarios</h2>
-        <p className="text-gray-600">Asignar roles a usuarios del sistema</p>
+        <p className="text-gray-600">Administrar roles y sedes de usuarios del sistema</p>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* Lista de Usuarios */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Usuarios</h2>
-          <div className="space-y-2 max-h-[600px] overflow-y-auto">
-            {usuarios.map(usuario => (
-              <div
-                key={usuario.id}
-                onClick={() => seleccionarUsuario(usuario)}
-                className={`p-4 rounded-lg border-2 cursor-pointer transition ${usuarioSeleccionado?.id === usuario.id
-                  ? 'border-[#39A900] bg-green-50'
-                  : 'border-gray-200 hover:border-[#39A900] hover:bg-gray-50'
-                  }`}
-              >
-                <p className="font-semibold text-gray-800">{usuario.nombre}</p>
-                <p className="text-sm text-gray-600">{usuario.email}</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {usuario.roles.map(rol => (
-                    <span
-                      key={rol.id}
-                      className={`text-xs px-2 py-1 rounded ${rol.es_principal
-                        ? 'bg-[#39A900] text-white font-semibold'
-                        : 'bg-gray-200 text-gray-700'
-                        }`}
-                    >
-                      {rol.nombre}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
+      {/* Filtros de búsqueda */}
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Filtros de búsqueda</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Buscar usuario</label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Nombre, email o documento..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filtrar por rol</label>
+            <select
+              value={filtroRol}
+              onChange={(e) => setFiltroRol(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
+            >
+              <option value="">Todos los roles</option>
+              {roles.map(rol => (
+                <option key={rol.id} value={rol.nombre}>{rol.nombre}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filtrar por sede</label>
+            <select
+              value={filtroSede}
+              onChange={(e) => setFiltroSede(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
+            >
+              <option value="">Todas las sedes</option>
+              {sedes.map(sede => (
+                <option key={sede.id} value={sede.id}>{sede.nombre}</option>
+              ))}
+            </select>
           </div>
         </div>
-
-        {/* Panel de Edición */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Asignar Roles</h2>
-
-          {usuarioSeleccionado ? (
-            <div>
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">Editando:</p>
-                <p className="font-semibold text-gray-800">{usuarioSeleccionado.nombre}</p>
-                <p className="text-sm text-gray-600">{usuarioSeleccionado.email}</p>
-              </div>
-
-              <div className="space-y-4">
-                <p className="font-semibold text-gray-700">Selecciona los roles:</p>
-                <p className="text-xs text-gray-500">* El rol "usuario" es obligatorio y no se puede quitar</p>
-
-                {roles.map(rol => {
-                  const esRolUsuario = rol.id === rolUsuarioId;
-                  const estaSeleccionado = rolesSeleccionados.includes(rol.id);
-
-                  return (
-                    <div
-                      key={rol.id}
-                      className={`flex items-center justify-between p-3 border rounded-lg ${esRolUsuario ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={estaSeleccionado}
-                          onChange={() => toggleRol(rol.id)}
-                          disabled={esRolUsuario}
-                          className="w-5 h-5 text-[#39A900] rounded focus:ring-[#39A900] disabled:opacity-50"
-                        />
-                        <div>
-                          <p className="font-medium text-gray-800">
-                            {rol.nombre}
-                            {esRolUsuario && <span className="ml-2 text-xs text-blue-600">(Obligatorio)</span>}
-                          </p>
-                        </div>
-                      </div>
-
-                      {estaSeleccionado && (
-                        <button
-                          onClick={() => setRolPrincipal(rol.id)}
-                          className={`text-xs px-3 py-1 rounded ${rolPrincipal === rol.id
-                            ? 'bg-[#39A900] text-white font-semibold'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                        >
-                          {rolPrincipal === rol.id ? '★ Principal' : 'Hacer Principal'}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-6">
-                <p className="font-semibold text-gray-700 mb-2">Selecciona la sede:</p>
-                <select
-                  value={sedeSeleccionada || ''}
-                  onChange={(e) => setSedeSeleccionada(parseInt(e.target.value))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
-                >
-                  <option value="">Seleccionar sede...</option>
-                  {sedes.map(sede => (
-                    <option key={sede.id} value={sede.id}>
-                      {sede.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mt-6 flex gap-3">
-                <Button
-                  onClick={guardarCambios}
-                  className="flex-1"
-                >
-                  Guardar Cambios
-                </Button>
-                <button
-                  onClick={() => setUsuarioSeleccionado(null)}
-                  className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center text-gray-500 py-12">
-              <p>← Selecciona un usuario de la lista para asignar roles</p>
-            </div>
-          )}
-        </div>
-
+        {(searchTerm || filtroRol || filtroSede) && (
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              Mostrando {usuariosFiltrados.length} de {usuarios.length} usuarios
+            </p>
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setFiltroRol('');
+                setFiltroSede('');
+              }}
+              className="text-sm text-[#39A900] hover:text-[#007832] font-medium"
+            >
+              Limpiar filtros
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* Tabla de usuarios */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Usuario
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Documento
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Roles
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Sede
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {usuariosFiltrados.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <svg className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      </svg>
+                      <p className="text-gray-500 font-medium">
+                        {searchTerm || filtroRol || filtroSede ? 'No se encontraron usuarios con los filtros aplicados' : 'No hay usuarios registrados'}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                usuariosFiltrados.map(usuario => (
+                  <tr key={usuario.id} className="hover:bg-green-50 transition-colors duration-150">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{usuario.nombre}</p>
+                        <p className="text-sm text-gray-500">{usuario.email}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <p className="text-sm text-gray-900">{usuario.id}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {usuario.roles.map(rol => (
+                          <span
+                            key={rol.id}
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              rol.es_principal
+                                ? 'bg-[#39A900] text-white'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {rol.nombre}
+                            {rol.es_principal && <span className="ml-1">★</span>}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <p className="text-sm text-gray-900">
+                        {usuario.roles.length > 0 && usuario.roles[0].sede_nombre 
+                          ? usuario.roles[0].sede_nombre 
+                          : 'Sin sede asignada'
+                        }
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <button
+                        onClick={() => seleccionarUsuario(usuario)}
+                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#39A900] hover:bg-[#007832] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#39A900] transition-colors"
+                      >
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                        </svg>
+                        Asignar
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modal de edición */}
+      {showModal && usuarioSeleccionado && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#39A900] to-[#007832] text-white px-8 py-5 flex justify-between items-center rounded-t-2xl">
+              <div>
+                <h3 className="text-xl font-bold">Asignar Roles y Sede</h3>
+              </div>
+              <button
+                onClick={cerrarModal}
+                className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-8 overflow-y-auto flex-1">
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Información del usuario:</p>
+                <p className="font-semibold text-gray-800">{usuarioSeleccionado.nombre}</p>
+                <p className="text-sm text-gray-600">{usuarioSeleccionado.email}</p>
+                <p className="text-sm text-gray-600">Documento: {usuarioSeleccionado.id}</p>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <p className="font-semibold text-gray-700 mb-3">Asignar roles:</p>
+                  <p className="text-xs text-gray-500 mb-4">* El rol "usuario" es obligatorio y no se puede quitar</p>
+
+                  <div className="space-y-3">
+                    {roles.map(rol => {
+                      const esRolUsuario = rol.id === rolUsuarioId;
+                      const estaSeleccionado = rolesSeleccionados.includes(rol.id);
+
+                      return (
+                        <div
+                          key={rol.id}
+                          className={`flex items-center justify-between p-4 border rounded-lg ${
+                            esRolUsuario ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={estaSeleccionado}
+                              onChange={() => toggleRol(rol.id)}
+                              disabled={esRolUsuario}
+                              className="w-5 h-5 text-[#39A900] rounded focus:ring-[#39A900] disabled:opacity-50"
+                            />
+                            <div>
+                              <p className="font-medium text-gray-800">
+                                {rol.nombre}
+                                {esRolUsuario && <span className="ml-2 text-xs text-blue-600">(Obligatorio)</span>}
+                              </p>
+                            </div>
+                          </div>
+
+                          {estaSeleccionado && (
+                            <button
+                              onClick={() => setRolPrincipal(rol.id)}
+                              className={`text-xs px-3 py-1 rounded-full font-medium transition ${
+                                rolPrincipal === rol.id
+                                  ? 'bg-[#39A900] text-white'
+                                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                              }`}
+                            >
+                              {rolPrincipal === rol.id ? '★ Principal' : 'Hacer Principal'}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-700 mb-3">Asignar sede:</p>
+                  <select
+                    value={sedeSeleccionada || ''}
+                    onChange={(e) => setSedeSeleccionada(parseInt(e.target.value))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
+                  >
+                    <option value="">Seleccionar sede...</option>
+                    {sedes.map(sede => (
+                      <option key={sede.id} value={sede.id}>
+                        {sede.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-8 py-5 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 rounded-b-2xl">
+              <button
+                onClick={cerrarModal}
+                className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition font-medium"
+              >
+                Cancelar
+              </button>
+              <Button
+                onClick={guardarCambios}
+                className="px-6 py-3"
+              >
+                Guardar Cambios
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

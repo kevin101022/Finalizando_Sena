@@ -170,14 +170,19 @@ const DashboardVigilante = () => {
     devueltos: 0
   });
   const [loading, setLoading] = useState(true);
+  const [sinSedeAsignada, setSinSedeAsignada] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/dashboard/stats?rol=vigilante');
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!userData.documento) return;
+
+        const response = await fetch(`/api/dashboard/stats?rol=vigilante&documento=${userData.documento}`);
         const data = await response.json();
         if (data.success) {
           setStats(data.stats);
+          setSinSedeAsignada(data.sinSedeAsignada || false);
         }
       } catch (error) {
         console.error('Error al cargar estadísticas:', error);
@@ -188,6 +193,27 @@ const DashboardVigilante = () => {
 
     fetchStats();
   }, []);
+
+  if (sinSedeAsignada) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <div className="flex items-center">
+            <AlertIcon className="w-8 h-8 text-yellow-600 mr-3" />
+            <div>
+              <h3 className="text-lg font-semibold text-yellow-800">Sede no asignada</h3>
+              <p className="text-yellow-700 mt-1">
+                No tienes una sede asignada. Para poder autorizar salidas y registrar devoluciones, necesitas que el administrador te asigne una sede.
+              </p>
+              <p className="text-yellow-600 text-sm mt-2">
+                Contacta al administrador del sistema para que te asigne una sede.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -268,14 +294,19 @@ const DashboardCoordinador = () => {
     solicitudesRechazadas: 0
   });
   const [loading, setLoading] = useState(true);
+  const [sinSedeAsignada, setSinSedeAsignada] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/dashboard/stats?rol=coordinador');
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!userData.documento) return;
+
+        const response = await fetch(`/api/dashboard/stats?rol=coordinador&documento=${userData.documento}`);
         const data = await response.json();
         if (data.success) {
           setStats(data.stats);
+          setSinSedeAsignada(data.sinSedeAsignada || false);
         }
       } catch (error) {
         console.error('Error al cargar estadísticas:', error);
@@ -286,6 +317,27 @@ const DashboardCoordinador = () => {
 
     fetchStats();
   }, []);
+
+  if (sinSedeAsignada) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <div className="flex items-center">
+            <AlertIcon className="w-8 h-8 text-yellow-600 mr-3" />
+            <div>
+              <h3 className="text-lg font-semibold text-yellow-800">Sede no asignada</h3>
+              <p className="text-yellow-700 mt-1">
+                No tienes una sede asignada. Para poder revisar y aprobar solicitudes, necesitas que el administrador te asigne una sede.
+              </p>
+              <p className="text-yellow-600 text-sm mt-2">
+                Contacta al administrador del sistema para que te asigne una sede.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

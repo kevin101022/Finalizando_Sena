@@ -6,17 +6,31 @@ import { NextResponse } from 'next/server';
  * 
  * Obtiene todos los ambientes disponibles
  */
-export async function GET() {
+export async function GET(request) {
   try {
-    const result = await query(`
+    const { searchParams } = new URL(request.url);
+    const sedeId = searchParams.get('sede_id');
+
+    let sqlQuery = `
       SELECT 
         a.id,
         a.nombre,
-        s.nombre as sede_nombre
+        s.nombre as sede_nombre,
+        a.sede_id
       FROM ambientes a
       JOIN sedes s ON a.sede_id = s.id
-      ORDER BY s.nombre ASC, a.nombre ASC
-    `);
+    `;
+
+    const params = [];
+
+    if (sedeId) {
+      sqlQuery += ` WHERE a.sede_id = $1`;
+      params.push(sedeId);
+    }
+
+    sqlQuery += ` ORDER BY s.nombre ASC, a.nombre ASC`;
+
+    const result = await query(sqlQuery, params);
 
     return NextResponse.json({
       success: true,

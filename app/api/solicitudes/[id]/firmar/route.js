@@ -66,6 +66,43 @@ export async function POST(request, { params }) {
       );
     }
 
+    // Validar que el coordinador pertenezca a la sede de la solicitud
+    if (rol === 'coordinador') {
+      const sedeValidationResult = await query(`
+        SELECT s.sede_id, rp.sede_id as coordinador_sede_id
+        FROM solicitudes s
+        LEFT JOIN rol_persona rp ON rp.doc_persona = $2
+        LEFT JOIN rol r ON rp.rol_id = r.id AND r.nombre = 'coordinador'
+        WHERE s.id = $1
+      `, [parseInt(id), documento]);
+
+      if (sedeValidationResult.rows.length === 0) {
+        await query('ROLLBACK');
+        return NextResponse.json(
+          { success: false, error: 'Solicitud no encontrada' },
+          { status: 404 }
+        );
+      }
+
+      const { sede_id: solicitudSedeId, coordinador_sede_id: coordinadorSedeId } = sedeValidationResult.rows[0];
+
+      if (!coordinadorSedeId) {
+        await query('ROLLBACK');
+        return NextResponse.json(
+          { success: false, error: 'No tienes una sede asignada. Contacta al administrador para que te asigne una sede.' },
+          { status: 403 }
+        );
+      }
+
+      if (solicitudSedeId !== coordinadorSedeId) {
+        await query('ROLLBACK');
+        return NextResponse.json(
+          { success: false, error: 'Solo puedes firmar solicitudes de tu sede asignada' },
+          { status: 403 }
+        );
+      }
+    }
+
     // El administrador ya no puede firmar solicitudes
     if (rol === 'administrador') {
       await query('ROLLBACK');

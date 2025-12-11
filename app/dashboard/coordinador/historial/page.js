@@ -38,7 +38,7 @@ export default function HistorialSolicitudesCoordinador() {
   const fetchSolicitudes = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/solicitudes?rol=coordinador');
+      const res = await fetch(`/api/solicitudes?rol=coordinador&documento=${user.documento}`);
       const data = await res.json();
       
       if (data.success) {

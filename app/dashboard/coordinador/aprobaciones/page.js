@@ -34,7 +34,7 @@ export default function AprobacionesCoordinador() {
   const fetchSolicitudes = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/solicitudes');
+      const response = await fetch(`/api/solicitudes?rol=coordinador&documento=${user.documento}`);
       const data = await response.json();
       if (data.success) {
         setSolicitudes(data.solicitudes);

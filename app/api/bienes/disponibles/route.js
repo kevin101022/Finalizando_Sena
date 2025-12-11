@@ -7,9 +7,12 @@ import { NextResponse } from 'next/server';
  * Obtiene todos los bienes que están asignados a cuentadantes
  * y NO están bloqueados (disponibles para préstamo)
  */
-export async function GET() {
+export async function GET(request) {
   try {
-    const result = await query(`
+    const { searchParams } = new URL(request.url);
+    const sedeId = searchParams.get('sede_id');
+
+    let sqlQuery = `
       SELECT 
         a.id as asignacion_id,
         b.id as bien_id,
@@ -26,8 +29,18 @@ export async function GET() {
       JOIN ambientes amb ON a.ambiente_id = amb.id
       JOIN persona p ON a.doc_persona = p.documento
       WHERE a.bloqueado = false
-      ORDER BY b.placa ASC
-    `);
+    `;
+
+    const params = [];
+
+    if (sedeId) {
+      sqlQuery += ` AND amb.sede_id = $1`;
+      params.push(sedeId);
+    }
+
+    sqlQuery += ` ORDER BY b.placa ASC`;
+
+    const result = await query(sqlQuery, params);
 
     return NextResponse.json({
       success: true,

@@ -151,6 +151,11 @@ export default function ModalDetalleSolicitud({
                           <span className="text-sm font-semibold text-gray-700">{nombreRol}</span>
                           <span className={`text-sm font-bold ${estado.color}`}>{estado.text}</span>
                         </div>
+                        {firma && firma.fecha_firmado && (
+                          <div className="mt-1 text-xs text-gray-500">
+                            Firmado el: {new Date(firma.fecha_firmado).toLocaleString('es-CO')}
+                          </div>
+                        )}
                         {firma && firma.observacion && (
                           <div className="mt-2 text-sm text-gray-700 italic border-t border-gray-200 pt-2">
                             Nota: {firma.observacion}

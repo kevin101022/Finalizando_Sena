@@ -38,7 +38,7 @@ export default function SolicitudesCoordinador() {
 
   const fetchSolicitudes = async () => {
     try {
-      const res = await fetch('/api/solicitudes?rol=coordinador');
+      const res = await fetch(`/api/solicitudes?rol=coordinador&documento=${user.documento}`);
       const data = await res.json();
       console.log('Solicitudes coordinador:', data);
       if (data.success) {
@@ -66,7 +66,7 @@ export default function SolicitudesCoordinador() {
         placeholder: aprobar ? 'Ingresa una observación...' : 'Debes indicar el motivo...'
       }
     );
-    
+
     if (!aprobar && !observacion) {
       toast.warning('Debes indicar el motivo del rechazo');
       return;

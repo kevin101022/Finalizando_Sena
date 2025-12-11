@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const rol = searchParams.get('rol');
+    const rol = searchParams.get('rol')?.toLowerCase();
     const documento = searchParams.get('documento');
 
     let sqlQuery = `
@@ -45,10 +45,33 @@ export async function GET(request) {
 
     const params = [];
 
-    // Si es usuario, solo ve sus propias solicitudes
+    // Lógica de filtrado según rol
     if (rol === 'usuario' && documento) {
-      sqlQuery += ` AND s.doc_persona = $1`;
+      // Usuario ve solo sus solicitudes
       params.push(documento);
+      sqlQuery += ` AND s.doc_persona = $${params.length}`;
+
+    } else if (rol === 'vigilante' || rol === 'coordinador') {
+      if (!documento) {
+        // Seguridad: Si tiene rol restringido pero no envía documento, no ve nada
+        sqlQuery += ` AND 1=0`;
+      } else {
+        // Vigilante y Coordinador ven solo solicitudes de su SEDE asignada
+        const sedeResult = await query(`
+          SELECT rp.sede_id 
+          FROM rol_persona rp
+          JOIN rol r ON rp.rol_id = r.id
+          WHERE rp.doc_persona = $1 AND r.nombre = $2
+        `, [documento, rol]);
+
+        if (sedeResult.rows.length > 0 && sedeResult.rows[0].sede_id) {
+          params.push(sedeResult.rows[0].sede_id);
+          sqlQuery += ` AND s.sede_id = $${params.length}`;
+        } else {
+          // Si no tiene sede asignada (o error), forzamos que no vea nada para seguridad
+          sqlQuery += ` AND 1=0`;
+        }
+      }
     }
 
     sqlQuery += ' ORDER BY s.id DESC';
@@ -77,16 +100,17 @@ export async function GET(request) {
  */
 export async function POST(request) {
   const client = await query('BEGIN');
-  
+
   try {
     const body = await request.json();
-    const { 
+    const {
       doc_persona,
       sede_id,
       fecha_ini_prestamo,
       fecha_fin_prestamo,
       destino,
       motivo,
+      observaciones,
       bienes // Array de asignacion_id
     } = body;
 
@@ -155,8 +179,9 @@ export async function POST(request) {
           fecha_fin_prestamo,
           destino,
           motivo,
+          observaciones,
           estado
-        ) VALUES ($1, $2, $3, $4, $5, $6, 'pendiente')
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pendiente')
         RETURNING id
       `, [
         doc_persona,
@@ -164,7 +189,8 @@ export async function POST(request) {
         fecha_ini_prestamo,
         fecha_fin_prestamo,
         destino,
-        motivo
+        motivo,
+        observaciones || null
       ]);
 
       const solicitudId = solicitudResult.rows[0].id;

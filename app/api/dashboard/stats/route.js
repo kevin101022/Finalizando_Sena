@@ -102,37 +102,67 @@ export async function GET(request) {
     }
 
     // Estadísticas para COORDINADOR
-    if (rol === 'coordinador') {
-      // Solicitudes pendientes de firma del coordinador (cuentadante ya firmó)
+    if (rol === 'coordinador' && documento) {
+      // Obtener sede del coordinador
+      const sedeResult = await query(`
+        SELECT rp.sede_id 
+        FROM rol_persona rp
+        JOIN rol r ON rp.rol_id = r.id
+        WHERE rp.doc_persona = $1 AND r.nombre = 'coordinador'
+      `, [documento]);
+
+      const sedeId = sedeResult.rows[0]?.sede_id;
+
+      if (!sedeId) {
+        // Si no tiene sede asignada, retornar estadísticas vacías con indicador
+        return NextResponse.json({
+          success: true,
+          stats: {
+            solicitudesPendientes: 0,
+            solicitudesAprobadas: 0,
+            solicitudesRechazadas: 0
+          },
+          sinSedeAsignada: true
+        });
+      }
+
+      // Solicitudes pendientes de firma del coordinador (cuentadante ya firmó) - SOLO DE SU SEDE
       const solicitudesPendientesQuery = `
         SELECT COUNT(DISTINCT s.id) as total
         FROM solicitudes s
         WHERE s.estado = 'firmada_cuentadante'
+          AND s.sede_id = $1
           AND NOT EXISTS (
             SELECT 1 FROM firma_solicitud fs
             WHERE fs.solicitud_id = s.id
               AND fs.rol_usuario = 'coordinador'
           )
       `;
-      const solicitudesPendientesResult = await query(solicitudesPendientesQuery);
+      const solicitudesPendientesResult = await query(solicitudesPendientesQuery, [sedeId]);
       const solicitudesPendientes = parseInt(solicitudesPendientesResult.rows[0].total);
 
-      // Solicitudes aprobadas por el coordinador
+      // Solicitudes aprobadas por el coordinador - SOLO DE SU SEDE
       const solicitudesAprobadasQuery = `
         SELECT COUNT(*) as total
-        FROM firma_solicitud
-        WHERE rol_usuario = 'coordinador' AND firma = true
+        FROM firma_solicitud fs
+        JOIN solicitudes s ON fs.solicitud_id = s.id
+        WHERE fs.rol_usuario = 'coordinador' 
+          AND fs.firma = true
+          AND s.sede_id = $1
       `;
-      const solicitudesAprobadasResult = await query(solicitudesAprobadasQuery);
+      const solicitudesAprobadasResult = await query(solicitudesAprobadasQuery, [sedeId]);
       const solicitudesAprobadas = parseInt(solicitudesAprobadasResult.rows[0].total);
 
-      // Solicitudes rechazadas por el coordinador
+      // Solicitudes rechazadas por el coordinador - SOLO DE SU SEDE
       const solicitudesRechazadasQuery = `
         SELECT COUNT(*) as total
-        FROM firma_solicitud
-        WHERE rol_usuario = 'coordinador' AND firma = false
+        FROM firma_solicitud fs
+        JOIN solicitudes s ON fs.solicitud_id = s.id
+        WHERE fs.rol_usuario = 'coordinador' 
+          AND fs.firma = false
+          AND s.sede_id = $1
       `;
-      const solicitudesRechazadasResult = await query(solicitudesRechazadasQuery);
+      const solicitudesRechazadasResult = await query(solicitudesRechazadasQuery, [sedeId]);
       const solicitudesRechazadas = parseInt(solicitudesRechazadasResult.rows[0].total);
 
       return NextResponse.json({
@@ -177,26 +207,49 @@ export async function GET(request) {
     }
 
     // Estadísticas para VIGILANTE
-    if (rol === 'vigilante') {
-      // Solicitudes aprobadas pendientes de autorización de salida
+    if (rol === 'vigilante' && documento) {
+      // Obtener sede del vigilante
+      const sedeResult = await query(`
+        SELECT rp.sede_id 
+        FROM rol_persona rp
+        JOIN rol r ON rp.rol_id = r.id
+        WHERE rp.doc_persona = $1 AND r.nombre = 'vigilante'
+      `, [documento]);
+
+      const sedeId = sedeResult.rows[0]?.sede_id;
+
+      if (!sedeId) {
+        // Si no tiene sede asignada, retornar estadísticas vacías con indicador
+        return NextResponse.json({
+          success: true,
+          stats: {
+            pendientesAutorizacion: 0,
+            enPrestamo: 0,
+            devueltos: 0
+          },
+          sinSedeAsignada: true
+        });
+      }
+
+      // Solicitudes aprobadas pendientes de autorización de salida - SOLO DE SU SEDE
       const pendientesQuery = `
         SELECT COUNT(*) as total
         FROM solicitudes
-        WHERE estado = 'aprobada'
+        WHERE estado = 'aprobada' AND sede_id = $1
       `;
-      const pendientesResult = await query(pendientesQuery);
+      const pendientesResult = await query(pendientesQuery, [sedeId]);
       const pendientesAutorizacion = parseInt(pendientesResult.rows[0].total);
 
-      // Solicitudes en préstamo (autorizadas o en_prestamo)
+      // Solicitudes en préstamo (autorizadas o en_prestamo) - SOLO DE SU SEDE
       const enPrestamoQuery = `
         SELECT COUNT(*) as total
         FROM solicitudes
-        WHERE estado IN ('autorizada', 'en_prestamo')
+        WHERE estado IN ('autorizada', 'en_prestamo') AND sede_id = $1
       `;
-      const enPrestamoResult = await query(enPrestamoQuery);
+      const enPrestamoResult = await query(enPrestamoQuery, [sedeId]);
       const enPrestamo = parseInt(enPrestamoResult.rows[0].total);
 
-      // Solicitudes devueltas hoy
+      // Solicitudes devueltas hoy - SOLO DE SU SEDE
       const devueltosQuery = `
         SELECT COUNT(*) as total
         FROM solicitudes s
@@ -209,9 +262,10 @@ export async function GET(request) {
           LIMIT 1
         ) last_sign ON TRUE
         WHERE s.estado = 'devuelto'
+          AND s.sede_id = $1
           AND DATE(last_sign.fecha_firmado) = CURRENT_DATE
       `;
-      const devueltosResult = await query(devueltosQuery);
+      const devueltosResult = await query(devueltosQuery, [sedeId]);
       const devueltos = parseInt(devueltosResult.rows[0].total);
 
       return NextResponse.json({

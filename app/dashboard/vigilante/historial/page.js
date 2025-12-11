@@ -41,7 +41,7 @@ export default function HistorialVigilante() {
 
   const fetchHistorial = async () => {
     try {
-      const res = await fetch('/api/solicitudes/vigilante?tipo=historial');
+      const res = await fetch(`/api/solicitudes/vigilante?tipo=historial&documento=${user.documento}`);
       const data = await res.json();
       if (data.success) {
         setSolicitudes(data.solicitudes);

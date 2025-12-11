@@ -38,7 +38,7 @@ export default function AutorizarSalidas() {
 
   const fetchSolicitudes = async () => {
     try {
-      const res = await fetch('/api/solicitudes/vigilante?tipo=pendientes');
+      const res = await fetch(`/api/solicitudes/vigilante?tipo=pendientes&documento=${user.documento}`);
       const data = await res.json();
       if (data.success) {
         setSolicitudes(data.solicitudes);

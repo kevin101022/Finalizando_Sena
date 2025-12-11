@@ -60,12 +60,14 @@ export async function GET(request) {
           r.id, 
           r.nombre,
           rp.sede_id,
+          s.nombre as sede_nombre,
           CASE 
             WHEN COUNT(*) OVER (PARTITION BY rp.doc_persona) = 1 THEN true
             ELSE false
           END as es_principal
         FROM rol r
         INNER JOIN rol_persona rp ON r.id = rp.rol_id
+        LEFT JOIN sedes s ON rp.sede_id = s.id
         WHERE rp.doc_persona = $1
         ORDER BY 
           CASE r.nombre
