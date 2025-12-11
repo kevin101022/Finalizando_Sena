@@ -36,7 +36,7 @@ export async function GET(request) {
         (
           SELECT COUNT(*) 
           FROM firma_solicitud fs 
-          WHERE fs.solicitud_id = s.id AND fs.firma = true
+          WHERE fs.solicitud_id = s.id
         ) as firmas_completadas,
         (
           SELECT COUNT(*) 

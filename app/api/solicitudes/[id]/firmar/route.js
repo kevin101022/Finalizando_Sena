@@ -33,6 +33,15 @@ export async function POST(request, { params }) {
       );
     }
 
+    // Validar que si rechaza, debe incluir observación obligatoria
+    if (firma === false && (!observacion || observacion.trim() === '')) {
+      await query('ROLLBACK');
+      return NextResponse.json(
+        { success: false, error: 'La observación es obligatoria cuando se rechaza una solicitud' },
+        { status: 400 }
+      );
+    }
+
     // Verificar que la solicitud existe
     const solicitudResult = await query(
       'SELECT estado FROM solicitudes WHERE id = $1',
@@ -66,15 +75,24 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Validar que el coordinador pertenezca a la sede de la solicitud
-    if (rol === 'coordinador') {
+    if (rol === 'vigilante' && estadoActual !== 'aprobada') {
+      await query('ROLLBACK');
+      return NextResponse.json(
+        { success: false, error: 'La solicitud debe estar aprobada por el coordinador' },
+        { status: 400 }
+      );
+    }
+
+    // Validar que el coordinador y vigilante pertenezcan a la sede de la solicitud
+    if (rol === 'coordinador' || rol === 'vigilante') {
+      const rolNombre = rol === 'coordinador' ? 'coordinador' : 'vigilante';
       const sedeValidationResult = await query(`
-        SELECT s.sede_id, rp.sede_id as coordinador_sede_id
+        SELECT s.sede_id, rp.sede_id as usuario_sede_id
         FROM solicitudes s
         LEFT JOIN rol_persona rp ON rp.doc_persona = $2
-        LEFT JOIN rol r ON rp.rol_id = r.id AND r.nombre = 'coordinador'
+        LEFT JOIN rol r ON rp.rol_id = r.id AND r.nombre = $3
         WHERE s.id = $1
-      `, [parseInt(id), documento]);
+      `, [parseInt(id), documento, rolNombre]);
 
       if (sedeValidationResult.rows.length === 0) {
         await query('ROLLBACK');
@@ -84,9 +102,9 @@ export async function POST(request, { params }) {
         );
       }
 
-      const { sede_id: solicitudSedeId, coordinador_sede_id: coordinadorSedeId } = sedeValidationResult.rows[0];
+      const { sede_id: solicitudSedeId, usuario_sede_id: usuarioSedeId } = sedeValidationResult.rows[0];
 
-      if (!coordinadorSedeId) {
+      if (!usuarioSedeId) {
         await query('ROLLBACK');
         return NextResponse.json(
           { success: false, error: 'No tienes una sede asignada. Contacta al administrador para que te asigne una sede.' },
@@ -94,7 +112,7 @@ export async function POST(request, { params }) {
         );
       }
 
-      if (solicitudSedeId !== coordinadorSedeId) {
+      if (solicitudSedeId !== usuarioSedeId) {
         await query('ROLLBACK');
         return NextResponse.json(
           { success: false, error: 'Solo puedes firmar solicitudes de tu sede asignada' },
@@ -124,8 +142,8 @@ export async function POST(request, { params }) {
       // Si rechaza, la solicitud queda rechazada
       nuevoEstado = 'rechazada';
       
-      // Desbloquear bienes cuando se rechaza (cuentadante o coordinador)
-      if (rol === 'cuentadante' || rol === 'coordinador') {
+      // Desbloquear bienes cuando se rechaza (cuentadante, coordinador o vigilante)
+      if (rol === 'cuentadante' || rol === 'coordinador' || rol === 'vigilante') {
         await query(`
           UPDATE asignaciones 
           SET bloqueado = false 
@@ -152,8 +170,12 @@ export async function POST(request, { params }) {
           )
         `, [parseInt(id)]);
       } else if (rol === 'coordinador') {
-        // El coordinador da la aprobación final
+        // El coordinador aprueba la solicitud
         nuevoEstado = 'aprobada';
+        // Los bienes ya están bloqueados desde la firma del cuentadante
+      } else if (rol === 'vigilante') {
+        // El vigilante firma = entrega física = en préstamo
+        nuevoEstado = 'en_prestamo';
         // Los bienes ya están bloqueados desde la firma del cuentadante
       }
     }

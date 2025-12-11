@@ -82,28 +82,57 @@ export default function MisBienes() {
       </div>
 
       {/* Filtros y Búsqueda */}
-      <div className="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Buscar por código, nombre o serial..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="bg-white p-4 rounded-xl shadow-sm mb-6">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Buscar por código, nombre o serial..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="w-full md:w-48">
+            <select
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">Todos los estados</option>
+              <option value="disponible">Disponible</option>
+              <option value="en_prestamo">En Préstamo</option>
+              <option value="en_mantenimiento">En Mantenimiento</option>
+            </select>
+          </div>
         </div>
-        <div className="w-full md:w-48">
-          <select
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">Todos los estados</option>
-            <option value="disponible">Disponible</option>
-            <option value="en_prestamo">En Préstamo</option>
-            <option value="en_mantenimiento">En Mantenimiento</option>
-          </select>
-        </div>
+
+        {/* Información de filtros y botón limpiar */}
+        {(searchTerm || statusFilter) && (
+          <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
+            <div>
+              {searchTerm && (
+                <span>Búsqueda: <span className="font-semibold text-gray-900">"{searchTerm}"</span></span>
+              )}
+              {searchTerm && statusFilter && <span className="mx-2">•</span>}
+              {statusFilter && (
+                <span>Estado: <span className="font-semibold text-gray-900">{statusFilter}</span></span>
+              )}
+            </div>
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setStatusFilter('');
+              }}
+              className="text-[#39A900] hover:text-[#007832] font-medium flex items-center gap-1 transition-colors duration-150 ml-4"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Limpiar filtros
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tabla de Bienes */}
@@ -137,7 +166,7 @@ export default function MisBienes() {
                 </tr>
               ) : (
                 bienes.map((bien) => (
-                  <tr key={bien.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={bien.id} className="hover:bg-green-50 transition-colors duration-150">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="h-10 w-10 rounded-lg bg-[#39A900]/10 flex items-center justify-center text-[#39A900] mr-3">

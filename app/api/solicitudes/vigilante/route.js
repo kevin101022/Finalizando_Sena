@@ -5,8 +5,8 @@ import { NextResponse } from 'next/server';
  * GET /api/solicitudes/vigilante
  * 
  * Obtiene solicitudes para el vigilante según el tipo:
- * - pendientes: Solicitudes aprobadas esperando autorización de salida
- * - autorizadas: Solicitudes con salida autorizada (bienes en préstamo)
+ * - pendientes: Solicitudes aprobadas esperando entrega por vigilante
+ * - autorizadas: Solicitudes con bienes en préstamo
  * - historial: Todas las solicitudes procesadas por el vigilante
  */
 export async function GET(request) {
@@ -50,7 +50,7 @@ export async function GET(request) {
           p.documento as solicitante_documento,
           sed.nombre as sede_nombre,
           (SELECT COUNT(*) FROM detalle_solicitud WHERE solicitud_id = s.id) as cantidad_bienes,
-          (SELECT COUNT(*) FROM firma_solicitud WHERE solicitud_id = s.id AND firma = true) as firmas_completadas
+          (SELECT COUNT(*) FROM firma_solicitud WHERE solicitud_id = s.id) as firmas_completadas
         FROM solicitudes s
         JOIN persona p ON s.doc_persona = p.documento
         LEFT JOIN sedes sed ON s.sede_id = sed.id
@@ -58,7 +58,7 @@ export async function GET(request) {
         ORDER BY s.id DESC
       `;
     } else if (tipo === 'autorizadas') {
-      // Solicitudes con salida autorizada (en préstamo o esperando devolución)
+      // Solicitudes con bienes en préstamo (esperando devolución)
       sqlQuery = `
         SELECT 
           s.id,
@@ -71,7 +71,7 @@ export async function GET(request) {
           p.documento as solicitante_documento,
           sed.nombre as sede_nombre,
           (SELECT COUNT(*) FROM detalle_solicitud WHERE solicitud_id = s.id) as cantidad_bienes,
-          (SELECT COUNT(*) FROM firma_solicitud WHERE solicitud_id = s.id AND firma = true) as firmas_completadas,
+          (SELECT COUNT(*) FROM firma_solicitud WHERE solicitud_id = s.id) as firmas_completadas,
           fs_salida.fecha_firmado as fecha_salida
         FROM solicitudes s
         JOIN persona p ON s.doc_persona = p.documento
@@ -84,7 +84,7 @@ export async function GET(request) {
           ORDER BY fecha_firmado ASC, id ASC
           LIMIT 1
         ) fs_salida ON TRUE
-        WHERE s.estado IN ('autorizada', 'en_prestamo') AND s.sede_id = $1
+        WHERE s.estado = 'en_prestamo' AND s.sede_id = $1
         ORDER BY s.id DESC
       `;
     } else if (tipo === 'historial') {
@@ -101,7 +101,7 @@ export async function GET(request) {
           p.documento as solicitante_documento,
           sed.nombre as sede_nombre,
           (SELECT COUNT(*) FROM detalle_solicitud WHERE solicitud_id = s.id) as cantidad_bienes,
-          (SELECT COUNT(*) FROM firma_solicitud WHERE solicitud_id = s.id AND firma = true) as firmas_completadas,
+          (SELECT COUNT(*) FROM firma_solicitud WHERE solicitud_id = s.id) as firmas_completadas,
           fs_salida.fecha_firmado as fecha_salida,
           fs_entrada.fecha_firmado as fecha_entrada
         FROM solicitudes s
@@ -124,7 +124,7 @@ export async function GET(request) {
           ORDER BY fecha_firmado DESC, id DESC
           LIMIT 1
         ) fs_entrada ON TRUE
-        WHERE s.estado IN ('autorizada', 'en_prestamo', 'devuelto') AND s.sede_id = $1
+        WHERE s.estado IN ('aprobada', 'en_prestamo', 'devuelto') AND s.sede_id = $1
         ORDER BY s.id DESC
       `;
     }

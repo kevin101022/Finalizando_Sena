@@ -68,18 +68,20 @@ export default function AutorizarSalidas() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`/api/solicitudes/${solicitudSeleccionada.id}/autorizar-salida`, {
+      const res = await fetch(`/api/solicitudes/${solicitudSeleccionada.id}/firmar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          rol: 'vigilante',
           documento: user.documento,
+          firma: true,
           observacion
         })
       });
 
       const data = await res.json();
       if (data.success) {
-        toast.success('Salida autorizada exitosamente');
+        toast.success('Bienes entregados exitosamente');
         setSolicitudSeleccionada(null);
         fetchSolicitudes();
       } else {

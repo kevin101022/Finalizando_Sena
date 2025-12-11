@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   HomeIcon,
   PackageIcon,
@@ -29,6 +29,7 @@ import {
  */
 export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   // Definir menús por rol con íconos SVG
   const menuItems = {
@@ -49,7 +50,7 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
         icon: <PackageIcon className="w-6 h-6" />
       },
       {
-        label: 'Historial',
+        label: 'Historial Asignaciones',
         path: '/dashboard/almacenista/historial-asignaciones',
         icon: <HistoryIcon className="w-6 h-6" />
       }
@@ -128,6 +129,16 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
 
   const currentMenu = menuItems[userRole] || [];
 
+  // Función para determinar si una ruta está activa
+  const isActiveRoute = (path) => {
+    return pathname === path;
+  };
+
+  // Función para determinar si el dashboard está activo
+  const isDashboardActive = () => {
+    return pathname === '/dashboard';
+  };
+
   return (
     <aside
       className={`bg-gradient-to-b from-[#39A900] to-[#007832] text-white transition-all duration-300 ease-in-out ${isOpen ? 'w-64' : 'w-0'
@@ -141,12 +152,24 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
             <li>
               <button
                 onClick={() => router.push('/dashboard')}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition-all text-left group border-b border-white/10 mb-2"
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left group border-b border-white/10 mb-2 relative ${
+                  isDashboardActive() 
+                    ? 'bg-white/20 shadow-lg border-l-4 border-white' 
+                    : 'hover:bg-white/10'
+                }`}
               >
                 <HomeIcon className="w-6 h-6" />
-                <span className="font-medium group-hover:translate-x-1 transition-transform whitespace-nowrap">
+                <span className={`font-medium transition-transform whitespace-nowrap ${
+                  isDashboardActive() 
+                    ? 'translate-x-1 font-semibold' 
+                    : 'group-hover:translate-x-1'
+                }`}>
                   Inicio / Dashboard
                 </span>
+                {/* Indicador de ruta activa */}
+                {isDashboardActive() && (
+                  <div className="absolute right-3 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                )}
               </button>
             </li>
 
@@ -154,12 +177,24 @@ export default function Sidebar({ userRole, userName, isOpen, onToggle }) {
               <li key={index}>
                 <button
                   onClick={() => router.push(item.path)}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition-all text-left group"
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left group relative ${
+                    isActiveRoute(item.path) 
+                      ? 'bg-white/20 shadow-lg border-l-4 border-white' 
+                      : 'hover:bg-white/10'
+                  }`}
                 >
                   {item.icon}
-                  <span className="font-medium group-hover:translate-x-1 transition-transform whitespace-nowrap">
+                  <span className={`font-medium transition-transform whitespace-nowrap ${
+                    isActiveRoute(item.path) 
+                      ? 'translate-x-1 font-semibold' 
+                      : 'group-hover:translate-x-1'
+                  }`}>
                     {item.label}
                   </span>
+                  {/* Indicador de ruta activa */}
+                  {isActiveRoute(item.path) && (
+                    <div className="absolute right-3 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                  )}
                 </button>
               </li>
             ))}

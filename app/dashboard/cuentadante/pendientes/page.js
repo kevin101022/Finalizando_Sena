@@ -16,6 +16,7 @@ export default function SolicitudesPendientesCuentadante() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -124,6 +125,8 @@ export default function SolicitudesPendientesCuentadante() {
         mensajeVacio="No hay solicitudes pendientes de tu firma"
         mostrarSolicitante={true}
         mostrarAccionExtra={false}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
       />
 
       {/* Modal de detalles */}

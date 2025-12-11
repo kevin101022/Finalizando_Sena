@@ -40,7 +40,6 @@ export default function SolicitudesCoordinador() {
     try {
       const res = await fetch(`/api/solicitudes?rol=coordinador&documento=${user.documento}`);
       const data = await res.json();
-      console.log('Solicitudes coordinador:', data);
       if (data.success) {
         setSolicitudes(data.solicitudes);
       }

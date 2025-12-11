@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/app/components/Toast';
+import Pagination from '@/app/components/Pagination';
 
 export default function AprobacionesCoordinador() {
   const router = useRouter();
@@ -14,6 +15,8 @@ export default function AprobacionesCoordinador() {
   const [showModal, setShowModal] = useState(false);
   const [observacionRespuesta, setObservacionRespuesta] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Validar autenticación y rol
   useEffect(() => {
@@ -109,6 +112,12 @@ export default function AprobacionesCoordinador() {
     }
   };
 
+  // Paginación
+  const totalPages = Math.ceil(solicitudes.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const solicitudesPaginadas = solicitudes.slice(startIndex, endIndex);
+
   if (!user) return null;
 
   return (
@@ -117,6 +126,15 @@ export default function AprobacionesCoordinador() {
         <h2 className="text-2xl font-bold text-gray-800">Gestión de Solicitudes</h2>
         <p className="text-gray-600">Revise y gestione las solicitudes de préstamo pendientes</p>
       </div>
+
+      {/* Contador de resultados */}
+      {!loading && solicitudes.length > 0 && (
+        <div className="mb-4 text-sm text-gray-600">
+          Mostrando <span className="font-semibold text-gray-900">{startIndex + 1}</span> a{' '}
+          <span className="font-semibold text-gray-900">{Math.min(endIndex, solicitudes.length)}</span> de{' '}
+          <span className="font-semibold text-gray-900">{solicitudes.length}</span> solicitudes
+        </div>
+      )}
 
       {/* Tabla de Solicitudes */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -139,13 +157,13 @@ export default function AprobacionesCoordinador() {
                     <td colSpan="6" className="px-6 py-4 text-center">Cargando...</td>
                   </tr>
                 ))
-              ) : solicitudes.length === 0 ? (
+              ) : solicitudesPaginadas.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-8 text-center text-gray-500">No hay solicitudes registradas</td>
                 </tr>
               ) : (
-                solicitudes.map((solicitud) => (
-                  <tr key={solicitud.id} className="hover:bg-gray-50">
+                solicitudesPaginadas.map((solicitud) => (
+                  <tr key={solicitud.id} className="hover:bg-green-50 transition-colors duration-150">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(solicitud.created_at)}
                     </td>
@@ -166,8 +184,6 @@ export default function AprobacionesCoordinador() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => {
-                          console.log('Estado de solicitud:', solicitud.estado, 'Tipo:', typeof solicitud.estado);
-                          console.log('Comparación:', solicitud.estado?.toLowerCase() === 'firmada_cuentadante');
                           setSelectedSolicitud(solicitud);
                           setShowModal(true);
                         }}
@@ -183,6 +199,18 @@ export default function AprobacionesCoordinador() {
           </table>
         </div>
       </div>
+
+      {/* Paginación */}
+      {!loading && solicitudes.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={solicitudes.length}
+          itemsPerPage={itemsPerPage}
+          itemName="solicitudes"
+        />
+      )}
 
       {/* Modal de Detalles */}
       {showModal && selectedSolicitud && (

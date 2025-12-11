@@ -11,7 +11,7 @@ import { filtrarSolicitudes } from '@/lib/solicitudUtils';
 export default function MisSolicitudes() {
   const router = useRouter();
   const toast = useToast();
-  const { confirm } = useConfirm();
+  const { confirm, prompt } = useConfirm();
   const [user, setUser] = useState(null);
   const [solicitudes, setSolicitudes] = useState([]);
   const [solicitudesFiltradas, setSolicitudesFiltradas] = useState([]);
@@ -19,6 +19,7 @@ export default function MisSolicitudes() {
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [estadoFiltro, setEstadoFiltro] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -63,7 +64,25 @@ export default function MisSolicitudes() {
   };
 
   const cancelarSolicitud = async (solicitudId) => {
-    const confirmed = await confirm('¿Estás seguro de cancelar esta solicitud?', {
+    // Primero pedir el motivo de cancelación
+    const motivoCancelacion = await prompt('¿Por qué deseas cancelar esta solicitud?', {
+      title: 'Motivo de cancelación',
+      placeholder: 'Ej: Ya no necesito los bienes, cambié de fecha, etc.'
+    });
+
+    // Si el usuario canceló el modal, no hacer nada
+    if (motivoCancelacion === null) {
+      return;
+    }
+
+    // Si el usuario envió vacío, mostrar advertencia
+    if (motivoCancelacion.trim() === '') {
+      toast.warning('Debes indicar el motivo de la cancelación');
+      return;
+    }
+
+    // Luego confirmar la cancelación
+    const confirmed = await confirm(`¿Confirmar cancelación?\n\nMotivo: "${motivoCancelacion}"`, {
       title: 'Cancelar solicitud',
       confirmText: 'Sí, cancelar',
       type: 'danger'
@@ -72,13 +91,17 @@ export default function MisSolicitudes() {
 
     try {
       const res = await fetch(`/api/solicitudes/${solicitudId}/cancelar`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          motivo_cancelacion: motivoCancelacion
+        })
       });
 
       const data = await res.json();
 
       if (data.success) {
-        toast.success('Solicitud cancelada');
+        toast.success('Solicitud cancelada exitosamente');
         fetchSolicitudes();
       } else {
         toast.error(data.error || 'Error al cancelar');
@@ -121,6 +144,8 @@ export default function MisSolicitudes() {
         onSearchChange={setSearchTerm}
         estadoFiltro={estadoFiltro}
         onEstadoChange={setEstadoFiltro}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
       />
 
       {/* Modal de detalles */}

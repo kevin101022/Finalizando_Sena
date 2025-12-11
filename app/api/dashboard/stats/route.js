@@ -66,17 +66,17 @@ export async function GET(request) {
         SELECT COUNT(*) as total
         FROM solicitudes
         WHERE doc_persona = $1 
-          AND estado IN ('pendiente', 'firmada_cuentadante', 'aprobada', 'autorizada')
+          AND estado IN ('pendiente', 'firmada_cuentadante', 'aprobada', 'en_prestamo')
       `;
       const solicitudesActivasResult = await query(solicitudesActivasQuery, [documento]);
       const solicitudesActivas = parseInt(solicitudesActivasResult.rows[0].total);
 
-      // 2. Solicitudes aprobadas (completamente aprobadas o autorizadas)
+      // 2. Solicitudes aprobadas (completamente aprobadas o en préstamo)
       const solicitudesAprobadasQuery = `
         SELECT COUNT(*) as total
         FROM solicitudes
         WHERE doc_persona = $1 
-          AND estado IN ('aprobada', 'autorizada', 'en_prestamo')
+          AND estado IN ('aprobada', 'en_prestamo')
       `;
       const solicitudesAprobadasResult = await query(solicitudesAprobadasQuery, [documento]);
       const solicitudesAprobadas = parseInt(solicitudesAprobadasResult.rows[0].total);
@@ -240,11 +240,11 @@ export async function GET(request) {
       const pendientesResult = await query(pendientesQuery, [sedeId]);
       const pendientesAutorizacion = parseInt(pendientesResult.rows[0].total);
 
-      // Solicitudes en préstamo (autorizadas o en_prestamo) - SOLO DE SU SEDE
+      // Solicitudes en préstamo - SOLO DE SU SEDE
       const enPrestamoQuery = `
         SELECT COUNT(*) as total
         FROM solicitudes
-        WHERE estado IN ('autorizada', 'en_prestamo') AND sede_id = $1
+        WHERE estado = 'en_prestamo' AND sede_id = $1
       `;
       const enPrestamoResult = await query(enPrestamoQuery, [sedeId]);
       const enPrestamo = parseInt(enPrestamoResult.rows[0].total);

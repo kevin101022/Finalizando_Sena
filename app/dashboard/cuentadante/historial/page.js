@@ -15,6 +15,7 @@ export default function HistorialSolicitudesCuentadante() {
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [estadoFiltro, setEstadoFiltro] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -57,6 +58,7 @@ export default function HistorialSolicitudesCuentadante() {
   useEffect(() => {
     const resultado = filtrarSolicitudes(solicitudes, searchTerm, estadoFiltro);
     setSolicitudesFiltradas(resultado);
+    setCurrentPage(1); // Resetear a página 1 cuando se aplican filtros
   }, [searchTerm, estadoFiltro, solicitudes]);
 
   const verDetalles = (solicitud) => {
@@ -90,6 +92,17 @@ export default function HistorialSolicitudesCuentadante() {
         onSearchChange={setSearchTerm}
         estadoFiltro={estadoFiltro}
         onEstadoChange={setEstadoFiltro}
+        estadosPermitidos={[
+          { value: 'pendiente', label: 'Pendiente' },
+          { value: 'firmada_cuentadante', label: 'Firmada por Cuentadante' },
+          { value: 'aprobada', label: 'Aprobada' },
+          { value: 'en_prestamo', label: 'En Préstamo' },
+          { value: 'devuelto', label: 'Devuelto' },
+          { value: 'rechazada', label: 'Rechazada' },
+          { value: 'cancelada', label: 'Cancelada' }
+        ]}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
       />
 
       {/* Modal de detalles */}

@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
  * POST /api/solicitudes/[id]/registrar-entrada
  * 
  * El vigilante registra la entrada (devolución) de bienes
- * - Verifica que la solicitud esté autorizada o en préstamo
+ * - Verifica que la solicitud esté en préstamo
  * - Registra firma de entrada del vigilante
  * - Cambia estado a 'devuelto'
  * - Desbloquea los bienes
@@ -35,7 +35,7 @@ export async function POST(request, { params }) {
     await query('BEGIN');
 
     try {
-      // 1. Verificar que la solicitud existe y está autorizada o en préstamo
+      // 1. Verificar que la solicitud existe y está en préstamo
       const solicitudResult = await query(
         'SELECT estado FROM solicitudes WHERE id = $1',
         [parseInt(id)]
@@ -51,10 +51,10 @@ export async function POST(request, { params }) {
 
       const estadoActual = solicitudResult.rows[0].estado;
 
-      if (estadoActual !== 'autorizada' && estadoActual !== 'en_prestamo') {
+      if (estadoActual !== 'en_prestamo') {
         await query('ROLLBACK');
         return NextResponse.json(
-          { success: false, error: 'La solicitud debe estar autorizada o en préstamo para registrar entrada' },
+          { success: false, error: 'La solicitud debe estar en préstamo para registrar entrada' },
           { status: 400 }
         );
       }
@@ -79,7 +79,7 @@ export async function POST(request, { params }) {
 
       // Opcional: Verificar que exista al menos 1 (la salida)
       if (firmasExistentes.rows.length === 0) {
-        // Esto sería raro si el estado es 'autorizada', pero por seguridad
+        // Esto sería raro si el estado es 'en_prestamo', pero por seguridad
         await query('ROLLBACK');
         return NextResponse.json(
           { success: false, error: 'No se ha registrado la salida previamente' },

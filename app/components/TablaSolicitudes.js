@@ -1,6 +1,7 @@
 'use client';
 
 import { getEstadoBadge, getEstadoTexto, formatDate } from '@/lib/solicitudUtils';
+import Pagination from '@/app/components/Pagination';
 
 /**
  * Componente reutilizable para mostrar tabla de solicitudes
@@ -19,6 +20,10 @@ import { getEstadoBadge, getEstadoTexto, formatDate } from '@/lib/solicitudUtils
  * @param {Function} onSearchChange - Callback cuando cambia el término de búsqueda
  * @param {string} estadoFiltro - Estado seleccionado para filtrar
  * @param {Function} onEstadoChange - Callback cuando cambia el filtro de estado
+ * @param {Array} estadosPermitidos - Array de estados permitidos para el filtro (opcional)
+ * @param {number} currentPage - Página actual (opcional, por defecto 1)
+ * @param {Function} onPageChange - Callback cuando cambia la página
+ * @param {number} itemsPerPage - Elementos por página (opcional, por defecto 10)
  */
 export default function TablaSolicitudes({
   solicitudes = [],
@@ -34,8 +39,18 @@ export default function TablaSolicitudes({
   searchTerm = '',
   onSearchChange = () => {},
   estadoFiltro = '',
-  onEstadoChange = () => {}
+  onEstadoChange = () => {},
+  estadosPermitidos = null,
+  currentPage = 1,
+  onPageChange = () => {},
+  itemsPerPage = 10
 }) {
+
+  // Paginación
+  const totalPages = Math.ceil(solicitudes.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const solicitudesPaginadas = solicitudes.slice(startIndex, endIndex);
 
   const formatFecha = (fecha) => {
     if (!fecha) return 'N/A';
@@ -102,21 +117,53 @@ export default function TablaSolicitudes({
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent outline-none transition-all bg-white"
               >
                 <option value="">Todos los estados</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="aprobada">Aprobada</option>
-                <option value="rechazada">Rechazada</option>
-                <option value="autorizada">Autorizada</option>
-                <option value="en_prestamo">En Préstamo</option>
-                <option value="devuelto">Devuelto</option>
-                <option value="cancelada">Cancelada</option>
+                {estadosPermitidos ? (
+                  // Estados específicos para el rol
+                  estadosPermitidos.map(estado => (
+                    <option key={estado.value} value={estado.value}>
+                      {estado.label}
+                    </option>
+                  ))
+                ) : (
+                  // Estados por defecto (todos)
+                  <>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="firmada_cuentadante">Firmada por Cuentadante</option>
+                    <option value="aprobada">Aprobada</option>
+                    <option value="en_prestamo">En Préstamo</option>
+                    <option value="devuelto">Devuelto</option>
+                    <option value="rechazada">Rechazada</option>
+                    <option value="cancelada">Cancelada</option>
+                  </>
+                )}
               </select>
             </div>
           </div>
 
-          {/* Contador de resultados */}
-          {!loading && (
-            <div className="mt-3 text-sm text-gray-600">
-              Mostrando <span className="font-semibold text-gray-900">{solicitudes.length}</span> solicitud(es)
+          {/* Información de filtros y botón limpiar */}
+          {!loading && (searchTerm || estadoFiltro) && (
+            <div className="mt-3 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {searchTerm && (
+                  <span>Búsqueda: <span className="font-semibold text-gray-900">&quot;{searchTerm}&quot;</span></span>
+                )}
+                {searchTerm && estadoFiltro && <span className="mx-2">•</span>}
+                {estadoFiltro && (
+                  <span>Estado: <span className="font-semibold text-gray-900">{estadoFiltro}</span></span>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  onSearchChange('');
+                  onEstadoChange('');
+                }}
+                className="text-sm text-[#39A900] hover:text-[#007832] font-medium flex items-center gap-1 transition-colors duration-150 ml-4"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Limpiar filtros
+              </button>
             </div>
           )}
         </div>
@@ -173,7 +220,7 @@ export default function TablaSolicitudes({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {solicitudes.map((solicitud) => (
+            {solicitudesPaginadas.map((solicitud) => (
               <tr key={solicitud.id} className="hover:bg-green-50 transition-colors duration-150">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
@@ -208,7 +255,7 @@ export default function TablaSolicitudes({
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                  {solicitud.destino}
+                  {solicitud.destino || 'No especificado'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-3 py-1 inline-flex text-xs font-bold rounded-lg ${getEstadoBadge(solicitud.estado)}`}>
@@ -254,6 +301,18 @@ export default function TablaSolicitudes({
         </table>
       </div>
         </div>
+      )}
+
+      {/* Paginación */}
+      {!loading && solicitudes.length > 0 && totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+          totalItems={solicitudes.length}
+          itemsPerPage={itemsPerPage}
+          itemName="solicitudes"
+        />
       )}
     </div>
   );

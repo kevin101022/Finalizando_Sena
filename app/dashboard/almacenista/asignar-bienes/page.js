@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Pagination from '@/app/components/Pagination';
 
 export default function AsignarBienes() {
   const router = useRouter();
@@ -21,6 +22,8 @@ export default function AsignarBienes() {
   const [ambienteSeleccionado, setAmbienteSeleccionado] = useState(null);
   const [bienesSeleccionados, setBienesSeleccionados] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Validar autenticación
   useEffect(() => {
@@ -35,37 +38,6 @@ export default function AsignarBienes() {
       setUser(parsedUser);
     }
   }, [router]);
-
-  // Cargar cuentadantes al montar
-  useEffect(() => {
-    if (user) {
-      fetchCuentadantes();
-    }
-  }, [user]);
-
-  // Cargar ambientes al montar (junto con cuentadantes)
-  useEffect(() => {
-    if (user) {
-      // Ya no cargamos ambientes al inicio, dependen del cuentadante
-      fetchBienesDisponibles();
-    }
-  }, [user]);
-
-  // Cargar ambientes cuando se selecciona cuentadante
-  useEffect(() => {
-    setAmbienteSeleccionado(null);
-    setAmbientes([]);
-
-    if (cuentadanteSeleccionado) {
-      if (cuentadanteSeleccionado.sede_id) {
-        fetchAmbientes(cuentadanteSeleccionado.sede_id);
-      } else {
-        // Si no tiene sede, no debería poder asignarse (o mostrar error)
-        // Opcional: setError('El cuentadante seleccionado no tiene sede asignada');
-        // Pero para evitar bloquear UI global, mejor un aviso o simplemente lista vacía
-      }
-    }
-  }, [cuentadanteSeleccionado]);
 
   const fetchCuentadantes = async () => {
     try {
@@ -108,6 +80,32 @@ export default function AsignarBienes() {
       setError('Error de conexión al cargar bienes');
     }
   };
+
+  // Cargar cuentadantes al montar
+  useEffect(() => {
+    if (user) {
+      fetchCuentadantes();
+    }
+  }, [user]);
+
+  // Cargar bienes disponibles al montar
+  useEffect(() => {
+    if (user) {
+      fetchBienesDisponibles();
+    }
+  }, [user]);
+
+  // Cargar ambientes cuando se selecciona cuentadante
+  useEffect(() => {
+    setAmbienteSeleccionado(null);
+    setAmbientes([]);
+
+    if (cuentadanteSeleccionado) {
+      if (cuentadanteSeleccionado.sede_id) {
+        fetchAmbientes(cuentadanteSeleccionado.sede_id);
+      }
+    }
+  }, [cuentadanteSeleccionado]);
 
   const handleToggleBien = (bienId) => {
     setBienesSeleccionados(prev => {
@@ -195,6 +193,17 @@ export default function AsignarBienes() {
     (bien.marca && bien.marca.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (bien.modelo && bien.modelo.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Paginación
+  const totalPages = Math.ceil(bienesFiltrados.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const bienesPaginados = bienesFiltrados.slice(startIndex, endIndex);
+
+  // Reset página cuando cambia la búsqueda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   if (!user) {
     return (
@@ -324,6 +333,22 @@ export default function AsignarBienes() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
                       />
+                      {searchTerm && (
+                        <div className="flex items-center justify-between mt-2 text-sm text-gray-600">
+                          <div>
+                            <span>Búsqueda: <span className="font-semibold text-gray-900">"{searchTerm}"</span></span>
+                          </div>
+                          <button
+                            onClick={() => setSearchTerm('')}
+                            className="text-[#39A900] hover:text-[#007832] font-medium flex items-center gap-1 transition-colors duration-150 ml-4"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Limpiar búsqueda
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Lista de ambientes con scroll */}
@@ -384,6 +409,22 @@ export default function AsignarBienes() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
               />
+              {searchTerm && (
+                <div className="flex items-center justify-between mt-2 text-sm text-gray-600">
+                  <div>
+                    <span>Búsqueda: <span className="font-semibold text-gray-900">"{searchTerm}"</span></span>
+                  </div>
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="text-[#39A900] hover:text-[#007832] font-medium flex items-center gap-1 transition-colors duration-150 ml-4"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Limpiar búsqueda
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Tabla de bienes con scroll */}
@@ -397,12 +438,12 @@ export default function AsignarBienes() {
                           type="checkbox"
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setBienesSeleccionados(bienesFiltrados.map(b => b.id));
+                              setBienesSeleccionados(bienesPaginados.map(b => b.id));
                             } else {
                               setBienesSeleccionados([]);
                             }
                           }}
-                          checked={bienesFiltrados.length > 0 && bienesSeleccionados.length === bienesFiltrados.length}
+                          checked={bienesPaginados.length > 0 && bienesPaginados.every(b => bienesSeleccionados.includes(b.id))}
                           className="w-4 h-4 text-[#39A900] rounded"
                         />
                       </th>
@@ -414,10 +455,10 @@ export default function AsignarBienes() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {bienesFiltrados.map((bien) => (
+                    {bienesPaginados.map((bien) => (
                       <tr
                         key={bien.id}
-                        className={`hover:bg-gray-50 ${bienesSeleccionados.includes(bien.id) ? 'bg-green-50' : ''}`}
+                        className={`hover:bg-green-50 transition-colors duration-150 ${bienesSeleccionados.includes(bien.id) ? 'bg-green-50' : ''}`}
                       >
                         <td className="px-4 py-4">
                           <input
@@ -438,7 +479,7 @@ export default function AsignarBienes() {
                         </td>
                       </tr>
                     ))}
-                    {bienesFiltrados.length === 0 && (
+                    {bienesPaginados.length === 0 && (
                       <tr>
                         <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
                           {bienesDisponibles.length === 0 ? 'No hay bienes disponibles para asignar' : 'No se encontraron bienes con ese criterio de búsqueda'}
@@ -449,9 +490,30 @@ export default function AsignarBienes() {
                 </table>
               </div>
             </div>
-            <p className="mt-4 text-sm text-gray-600">
-              {bienesSeleccionados.length} bien(es) seleccionado(s)
-            </p>
+
+            {/* Contador de resultados */}
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Mostrando <span className="font-semibold text-gray-900">{startIndex + 1}</span> a{' '}
+                <span className="font-semibold text-gray-900">{Math.min(endIndex, bienesFiltrados.length)}</span> de{' '}
+                <span className="font-semibold text-gray-900">{bienesFiltrados.length}</span> bienes disponibles
+              </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-semibold text-[#39A900]">{bienesSeleccionados.length}</span> bien(es) seleccionado(s)
+              </p>
+            </div>
+
+            {/* Paginación */}
+            {bienesFiltrados.length > itemsPerPage && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={bienesFiltrados.length}
+                itemsPerPage={itemsPerPage}
+                itemName="bienes disponibles"
+              />
+            )}
           </div>
         )}
 

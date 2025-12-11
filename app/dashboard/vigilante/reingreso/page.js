@@ -41,7 +41,7 @@ export default function ReingresoVigilante() {
             // Fetch only items that are "in transit" (en_prestamo or similar active state)
             // Since the user said "todo esta funcionando con la base de datos", I'll try filtering the "historial" endpoint 
             // OR see if there's a better endpoint. The previous code used ?tipo=historial.
-            // I'll assume looking at the response for items in 'en_prestamo' or 'autorizada' (though autorizada usually means ready to leave).
+            // Buscamos solicitudes que estén en préstamo para poder registrar su devolución.
             // Ideally, reingreso is for items that HAVE LEFT and are coming back.
             // So status should be 'en_prestamo'.
 
@@ -49,9 +49,8 @@ export default function ReingresoVigilante() {
             const data = await res.json();
             if (data.success) {
                 // Filter specifically for items that are currently OUT (en_prestamo)
-                const enTransito = data.solicitudes.filter(s => s.estado === 'en_prestamo' || s.estado === 'autorizada');
-                // Including 'autorizada' just in case the flow isn't strictly 'en_prestamo' yet, 
-                // but arguably 'autorizada' is for 'Salidas'. Reingreso is for 'en_prestamo'.
+                const enTransito = data.solicitudes.filter(s => s.estado === 'en_prestamo');
+                // Solo solicitudes en préstamo pueden ser devueltas
                 // I'll keep both for safety as per the previous code which allowed action on both.
 
                 setSolicitudes(enTransito);

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/app/components/Toast';
 import { useConfirm } from '@/app/components/ConfirmDialog';
+import Pagination from '@/app/components/Pagination';
 
 export default function HistorialAsignaciones() {
   const router = useRouter();
@@ -16,6 +17,8 @@ export default function HistorialAsignaciones() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAsignacion, setSelectedAsignacion] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -108,6 +111,17 @@ export default function HistorialAsignaciones() {
     a.ambiente_nombre?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Paginación
+  const totalPages = Math.ceil(asignacionesFiltradas.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const asignacionesPaginadas = asignacionesFiltradas.slice(startIndex, endIndex);
+
+  // Reset página cuando cambia el filtro
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -138,15 +152,25 @@ export default function HistorialAsignaciones() {
           placeholder="Buscar por placa, descripción, cuentadante o ambiente..."
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#39A900] focus:border-transparent"
         />
-      </div>
 
-      {/* Contador de resultados */}
-      {!loading && !error && (
-        <div className="mb-4 text-sm text-gray-600">
-          Mostrando <span className="font-semibold text-gray-900">{asignacionesFiltradas.length}</span> de{' '}
-          <span className="font-semibold text-gray-900">{asignaciones.length}</span> asignaciones
-        </div>
-      )}
+        {/* Información de filtros y botón limpiar */}
+        {searchTerm && (
+          <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
+            <div>
+              <span>Búsqueda: <span className="font-semibold text-gray-900">"{searchTerm}"</span></span>
+            </div>
+            <button
+              onClick={() => setSearchTerm('')}
+              className="text-[#39A900] hover:text-[#007832] font-medium flex items-center gap-1 transition-colors duration-150 ml-4"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Limpiar búsqueda
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Tabla */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -172,8 +196,8 @@ export default function HistorialAsignaciones() {
                     </div>
                   </td>
                 </tr>
-              ) : asignacionesFiltradas.length > 0 ? (
-                asignacionesFiltradas.map((asignacion) => (
+              ) : asignacionesPaginadas.length > 0 ? (
+                asignacionesPaginadas.map((asignacion) => (
                   <tr key={asignacion.id} className="hover:bg-green-50 transition-colors duration-150">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -262,6 +286,18 @@ export default function HistorialAsignaciones() {
           </table>
         </div>
       </div>
+
+      {/* Paginación */}
+      {!loading && !error && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={asignacionesFiltradas.length}
+          itemsPerPage={itemsPerPage}
+          itemName="asignaciones"
+        />
+      )}
 
       {/* Modal de Detalles */}
       {showModal && selectedAsignacion && (

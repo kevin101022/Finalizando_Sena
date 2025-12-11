@@ -18,9 +18,19 @@ export async function POST(request, { params }) {
       );
     }
 
+    const body = await request.json();
+    const { motivo_cancelacion } = body;
+
+    if (!motivo_cancelacion || motivo_cancelacion.trim() === '') {
+      return NextResponse.json(
+        { success: false, error: 'El motivo de cancelación es obligatorio' },
+        { status: 400 }
+      );
+    }
+
     // Verificar que la solicitud existe y está pendiente
     const checkResult = await query(
-      'SELECT estado FROM solicitudes WHERE id = $1',
+      'SELECT estado, observaciones FROM solicitudes WHERE id = $1',
       [parseInt(id)]
     );
 
@@ -38,10 +48,16 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Cancelar la solicitud
+    // Preparar la observación de cancelación
+    const observacionesActuales = checkResult.rows[0].observaciones || '';
+    const nuevaObservacion = observacionesActuales 
+      ? `${observacionesActuales}\n\nCANCELADA POR USUARIO: ${motivo_cancelacion}`
+      : `CANCELADA POR USUARIO: ${motivo_cancelacion}`;
+
+    // Cancelar la solicitud y agregar observación
     await query(
-      "UPDATE solicitudes SET estado = 'cancelada' WHERE id = $1",
-      [parseInt(id)]
+      "UPDATE solicitudes SET estado = 'cancelada', observaciones = $1 WHERE id = $2",
+      [nuevaObservacion, parseInt(id)]
     );
 
     return NextResponse.json({

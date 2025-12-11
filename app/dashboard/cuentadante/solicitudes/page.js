@@ -163,7 +163,7 @@ export default function SolicitudesCuentadante() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {solicitudes.map((sol) => (
-                  <tr key={sol.id} className="hover:bg-gray-50">
+                  <tr key={sol.id} className="hover:bg-green-50 transition-colors duration-150">
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-900">{sol.solicitante_nombre}</div>
                       <div className="text-xs text-gray-500">{sol.solicitante_email}</div>

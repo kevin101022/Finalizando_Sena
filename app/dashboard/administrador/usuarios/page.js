@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/app/components/Button';
 import { useToast } from '@/app/components/Toast';
+import Pagination from '@/app/components/Pagination';
 
 export default function GestionUsuarios() {
   const router = useRouter();
@@ -24,6 +25,10 @@ export default function GestionUsuarios() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroRol, setFiltroRol] = useState('');
   const [filtroSede, setFiltroSede] = useState('');
+
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Cargar usuarios y roles al montar
   useEffect(() => {
@@ -58,7 +63,14 @@ export default function GestionUsuarios() {
     }
 
     setUsuariosFiltrados(filtered);
+    setCurrentPage(1); // Reset página cuando cambian los filtros
   }, [searchTerm, filtroRol, filtroSede, usuarios]);
+
+  // Paginación
+  const totalPages = Math.ceil(usuariosFiltrados.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const usuariosPaginados = usuariosFiltrados.slice(startIndex, endIndex);
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -267,19 +279,33 @@ export default function GestionUsuarios() {
             </select>
           </div>
         </div>
+        {/* Información de filtros y botón limpiar */}
         {(searchTerm || filtroRol || filtroSede) && (
           <div className="mt-4 flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              Mostrando {usuariosFiltrados.length} de {usuarios.length} usuarios
-            </p>
+            <div className="text-sm text-gray-600">
+              {searchTerm && (
+                <span>Búsqueda: <span className="font-semibold text-gray-900">"{searchTerm}"</span></span>
+              )}
+              {searchTerm && (filtroRol || filtroSede) && <span className="mx-2">•</span>}
+              {filtroRol && (
+                <span>Rol: <span className="font-semibold text-gray-900">{filtroRol}</span></span>
+              )}
+              {filtroRol && filtroSede && <span className="mx-2">•</span>}
+              {filtroSede && (
+                <span>Sede: <span className="font-semibold text-gray-900">{sedes.find(s => s.id == filtroSede)?.nombre}</span></span>
+              )}
+            </div>
             <button
               onClick={() => {
                 setSearchTerm('');
                 setFiltroRol('');
                 setFiltroSede('');
               }}
-              className="text-sm text-[#39A900] hover:text-[#007832] font-medium"
+              className="text-sm text-[#39A900] hover:text-[#007832] font-medium flex items-center gap-1 transition-colors duration-150 ml-4"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
               Limpiar filtros
             </button>
           </div>
@@ -310,7 +336,7 @@ export default function GestionUsuarios() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {usuariosFiltrados.length === 0 ? (
+              {usuariosPaginados.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
@@ -324,7 +350,7 @@ export default function GestionUsuarios() {
                   </td>
                 </tr>
               ) : (
-                usuariosFiltrados.map(usuario => (
+                usuariosPaginados.map(usuario => (
                   <tr key={usuario.id} className="hover:bg-green-50 transition-colors duration-150">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -378,6 +404,18 @@ export default function GestionUsuarios() {
           </table>
         </div>
       </div>
+
+      {/* Paginación */}
+      {!loading && usuariosFiltrados.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={usuariosFiltrados.length}
+          itemsPerPage={itemsPerPage}
+          itemName="usuarios"
+        />
+      )}
 
       {/* Modal de edición */}
       {showModal && usuarioSeleccionado && (

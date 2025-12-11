@@ -264,6 +264,33 @@ export default function SolicitarBienes() {
                     ))}
                   </select>
                 </div>
+
+                {/* Información de filtros y botón limpiar */}
+                {(searchTerm || filtroCuentadante) && (
+                  <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
+                    <div>
+                      {searchTerm && (
+                        <span>Búsqueda: <span className="font-semibold text-gray-900">"{searchTerm}"</span></span>
+                      )}
+                      {searchTerm && filtroCuentadante && <span className="mx-2">•</span>}
+                      {filtroCuentadante && (
+                        <span>Cuentadante: <span className="font-semibold text-gray-900">{cuentadantes.find(c => c.documento === filtroCuentadante)?.nombre}</span></span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setFiltroCuentadante('');
+                      }}
+                      className="text-[#39A900] hover:text-[#007832] font-medium flex items-center gap-1 transition-colors duration-150 ml-4"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Limpiar filtros
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
@@ -285,7 +312,7 @@ export default function SolicitarBienes() {
                       </tr>
                     ) : (
                       bienesFiltrados.map(bien => (
-                        <tr key={bien.asignacion_id} className="hover:bg-gray-50 transition">
+                        <tr key={bien.asignacion_id} className="hover:bg-green-50 transition-colors duration-150">
                           <td className="px-4 py-3 text-sm font-medium text-gray-900">{bien.placa}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{bien.descripcion}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{bien.ambiente_nombre}</td>
@@ -325,7 +352,7 @@ export default function SolicitarBienes() {
                           <p className="text-xs font-bold text-[#39A900]">{grupo.cuentadante}</p>
                         </div>
                         {grupo.bienes.map(bien => (
-                          <div key={bien.asignacion_id} className="flex justify-between items-center p-2 hover:bg-gray-50">
+                          <div key={bien.asignacion_id} className="flex justify-between items-center p-2 hover:bg-green-50 transition-colors duration-150">
                             <span className="text-sm text-gray-700">{bien.placa} - {bien.descripcion}</span>
                             <button onClick={() => eliminarDelCarrito(bien.asignacion_id)} className="text-red-500 hover:text-red-700">
                               <TrashIcon className="w-4 h-4" />
@@ -365,7 +392,7 @@ export default function SolicitarBienes() {
 
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Salida (Sistema)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Inicio</label>
                     <input
                       type="datetime-local"
                       name="fecha_ini_prestamo"
