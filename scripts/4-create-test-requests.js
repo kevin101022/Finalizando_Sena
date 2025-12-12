@@ -294,6 +294,32 @@ async function createTestRequests() {
                 }
             }
 
+            // 🔧 ACTUALIZAR ESTADO BLOQUEADO DE BIENES SEGÚN EL ESTADO DE LA SOLICITUD
+            if (estadoAleatorio === 'firmada_cuentadante' || estadoAleatorio === 'aprobada' || estadoAleatorio === 'en_prestamo') {
+                // Bloquear bienes cuando el cuentadante ha firmado (y estados posteriores)
+                await pool.query(`
+                    UPDATE asignaciones 
+                    SET bloqueado = true 
+                    WHERE id IN (
+                        SELECT asignacion_id 
+                        FROM detalle_solicitud 
+                        WHERE solicitud_id = $1
+                    )
+                `, [solicitudId]);
+            } else if (estadoAleatorio === 'devuelto' || estadoAleatorio === 'rechazada' || estadoAleatorio === 'cancelada') {
+                // Desbloquear bienes cuando se devuelven, rechazan o cancelan
+                await pool.query(`
+                    UPDATE asignaciones 
+                    SET bloqueado = false 
+                    WHERE id IN (
+                        SELECT asignacion_id 
+                        FROM detalle_solicitud 
+                        WHERE solicitud_id = $1
+                    )
+                `, [solicitudId]);
+            }
+            // Para 'pendiente' no se hace nada (bienes siguen disponibles)
+
             solicitudesCreadas.push({
                 id: solicitudId,
                 usuario: usuarioSolicitante.nombres,
@@ -424,6 +450,8 @@ async function createTestRequests() {
                     ]);
                 }
             }
+
+
         }
 
         // 4. Resumen final
@@ -473,6 +501,12 @@ async function createTestRequests() {
         console.log('   🏁 Devuelto (4 firmas): Bienes devueltos - Proceso completado');
         console.log('   🚫 Cancelada (0 firmas): Cancelada por usuario');
         console.log('   ❌ Rechazadas: Rechazadas en diferentes etapas');
+
+        console.log('\n🔒 ESTADOS DE BIENES ACTUALIZADOS:');
+        console.log('   🟢 Pendientes: Bienes disponibles (bloqueado = false)');
+        console.log('   🔴 Firmada/Aprobada/En Préstamo: Bienes bloqueados (bloqueado = true)');
+        console.log('   🟢 Devuelto/Rechazada/Cancelada: Bienes disponibles (bloqueado = false)');
+
         console.log('\n💡 Próximos pasos:');
         console.log('   1. Inicia sesión con el usuario regular (100021) para ver sus solicitudes');
         console.log('   2. Inicia sesión con cuentadantes para ver solicitudes pendientes de su sede');

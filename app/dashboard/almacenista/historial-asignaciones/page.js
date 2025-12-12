@@ -57,7 +57,30 @@ export default function HistorialAsignaciones() {
     }
   };
 
+  // Renderizado de estado con colores
+  const renderEstado = (bloqueado) => {
+    if (bloqueado) {
+      return (
+        <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">
+          En Préstamo
+        </span>
+      );
+    } else {
+      return (
+        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+          Disponible
+        </span>
+      );
+    }
+  };
+
   const handleDesasignar = async (asignacion) => {
+    // Verificar si el bien está bloqueado antes de mostrar confirmación
+    if (asignacion.bloqueado) {
+      toast.error('No se puede desasignar un bien que está actualmente en préstamo');
+      return;
+    }
+
     const confirmado = await confirm(
       `¿Estás seguro de desasignar el bien "${asignacion.bien_descripcion}" (${asignacion.bien_placa}) del cuentadante ${asignacion.cuentadante_nombre}?`,
       {
@@ -182,6 +205,7 @@ export default function HistorialAsignaciones() {
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Descripción</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Cuentadante</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Ambiente</th>
+                <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Fecha Asignación</th>
                 <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
               </tr>
@@ -234,6 +258,9 @@ export default function HistorialAsignaciones() {
                         <p className="text-sm text-gray-900">{asignacion.ambiente_nombre}</p>
                       </div>
                     </td>
+                    <td className="px-6 py-4 text-center">
+                      {renderEstado(asignacion.bloqueado)}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-500">
                         <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,8 +284,13 @@ export default function HistorialAsignaciones() {
                         </button>
                         <button
                           onClick={() => handleDesasignar(asignacion)}
-                          className="inline-flex items-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors duration-150 text-sm font-medium"
-                          title="Desasignar bien"
+                          disabled={asignacion.bloqueado}
+                          className={`inline-flex items-center px-3 py-2 rounded-lg transition-colors duration-150 text-sm font-medium ${
+                            asignacion.bloqueado 
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                              : 'bg-red-100 text-red-700 hover:bg-red-200'
+                          }`}
+                          title={asignacion.bloqueado ? "No se puede desasignar: bien en préstamo" : "Desasignar bien"}
                         >
                           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
