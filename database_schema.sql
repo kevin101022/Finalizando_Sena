@@ -99,14 +99,15 @@ CREATE TABLE asignaciones (
 
 CREATE TABLE solicitudes (
     id SERIAL PRIMARY KEY,
-    fecha_ini_prestamo DATE NOT NULL,
-    fecha_fin_prestamo DATE NOT NULL,
+    fecha_ini_prestamo TIMESTAMP NOT NULL,
+    fecha_fin_prestamo TIMESTAMP NOT NULL,
     doc_persona VARCHAR(20) REFERENCES persona(documento),
     destino VARCHAR(255),
     motivo TEXT,
     estado VARCHAR(50) DEFAULT 'pendiente',
     observaciones TEXT,
-    sede_id INTEGER REFERENCES sedes(id)
+    sede_id INTEGER REFERENCES sedes(id),
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE detalle_solicitud (
@@ -139,5 +140,44 @@ INSERT INTO rol (nombre) VALUES
 
 -- Insertar marcas comunes
 INSERT INTO marcas (nombre) VALUES ('Generico'), ('HP'), ('Dell'), ('Lenovo'), ('Samsung');
+
+-- ========================================
+-- 6. ÍNDICES PARA PERFORMANCE
+-- ========================================
+
+-- Índices para búsquedas frecuentes
+CREATE INDEX idx_solicitudes_estado ON solicitudes(estado);
+CREATE INDEX idx_solicitudes_doc_persona ON solicitudes(doc_persona);
+CREATE INDEX idx_solicitudes_sede_id ON solicitudes(sede_id);
+CREATE INDEX idx_solicitudes_fecha_creacion ON solicitudes(fecha_creacion);
+
+CREATE INDEX idx_asignaciones_doc_persona ON asignaciones(doc_persona);
+CREATE INDEX idx_asignaciones_bien_id ON asignaciones(bien_id);
+CREATE INDEX idx_asignaciones_bloqueado ON asignaciones(bloqueado);
+
+CREATE INDEX idx_detalle_solicitud_solicitud_id ON detalle_solicitud(solicitud_id);
+CREATE INDEX idx_detalle_solicitud_asignacion_id ON detalle_solicitud(asignacion_id);
+
+CREATE INDEX idx_firma_solicitud_solicitud_id ON firma_solicitud(solicitud_id);
+CREATE INDEX idx_firma_solicitud_doc_persona ON firma_solicitud(doc_persona);
+
+CREATE INDEX idx_bienes_placa ON bienes(placa);
+CREATE INDEX idx_rol_persona_doc_persona ON rol_persona(doc_persona);
+
+-- ========================================
+-- 7. CONSTRAINTS ADICIONALES
+-- ========================================
+
+-- Validar estados de solicitud
+ALTER TABLE solicitudes ADD CONSTRAINT chk_estado_solicitud 
+    CHECK (estado IN ('pendiente', 'firmada_cuentadante', 'aprobada', 'en_prestamo', 'devuelto', 'rechazada', 'cancelada'));
+
+-- Validar que las fechas sean lógicas
+ALTER TABLE solicitudes ADD CONSTRAINT chk_fechas_logicas 
+    CHECK (fecha_fin_prestamo >= fecha_ini_prestamo);
+
+-- Validar estados de bien
+ALTER TABLE estado_bien ADD CONSTRAINT chk_estado_bien 
+    CHECK (estado IN ('disponible', 'en_prestamo', 'en_mantenimiento', 'dado_de_baja'));
 
 COMMIT;

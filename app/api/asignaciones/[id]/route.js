@@ -52,6 +52,26 @@ export async function DELETE(request, { params }) {
       );
     }
 
+    // Validar que no existan solicitudes históricas que referencien esta asignación
+    const solicitudesQuery = `
+      SELECT COUNT(*) as total
+      FROM detalle_solicitud ds
+      WHERE ds.asignacion_id = $1
+    `;
+    
+    const solicitudesResult = await query(solicitudesQuery, [asignacionId]);
+    const totalSolicitudes = parseInt(solicitudesResult.rows[0].total);
+
+    if (totalSolicitudes > 0) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `No se puede desasignar este bien porque tiene ${totalSolicitudes} solicitud(es) en el historial. Los bienes con historial de solicitudes no pueden ser desasignados para mantener la integridad de los datos.` 
+        },
+        { status: 400 }
+      );
+    }
+
     // Eliminar la asignación
     const deleteQuery = `
       DELETE FROM asignaciones 

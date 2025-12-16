@@ -25,19 +25,16 @@
 4. VIGILANTE - SALIDA
    ↓ Verifica que tenga las 2 firmas (cuentadante + coordinador)
    ↓ Autoriza salida del bien
-   ↓ Estado: aprobada → autorizada
+   ↓ Estado: aprobada → en_prestamo
    ↓ Bienes permanecen bloqueados (ya lo estaban desde firma del cuentadante)
-   ↓ Registro en firma_solicitud (rol: vigilante_salida)
+   ↓ Registro en firma_solicitud (rol: vigilante)
    
-5. USUARIO retira el bien
-   ↓ Estado: autorizada → en_prestamo
-   
-6. USUARIO devuelve el bien
+5. USUARIO devuelve el bien
    ↓ VIGILANTE - ENTRADA
    ↓ Registra devolución del bien
    ↓ Estado: en_prestamo → devuelto
    ↓ Bienes se desbloquean
-   ↓ Registro en firma_solicitud (rol: vigilante_entrada)
+   ↓ Registro en firma_solicitud (rol: vigilante)
 ```
 
 ## 👥 Roles y Responsabilidades
@@ -138,7 +135,7 @@
 | **pendiente** | Esperando firma del cuentadante | 0/4 | Cuentadante debe firmar |
 | **firmada_cuentadante** | Cuentadante firmó, esperando coordinador | 1/4 | Coordinador debe firmar |
 | **aprobada** | Coordinador aprobó | 2/4 | Vigilante debe autorizar salida |
-| **autorizada** | Vigilante autorizó salida (bien bloqueado) | 3/4 | Usuario puede retirar |
+
 | **en_prestamo** | Bien entregado y en uso | 3/4 | Pendiente devolución |
 | **devuelto** | Bien devuelto (bien desbloqueado) | 4/4 | Proceso completado |
 | **rechazada** | Alguien rechazó la solicitud | - | Fin del proceso |

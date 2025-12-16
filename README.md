@@ -102,10 +102,10 @@ createdb sena_bienes
 psql -U postgres -d sena_bienes -f database_schema.sql
 
 # 6. Configuración completa automática (RECOMENDADO)
-npm run setup-complete
+pnpm run setup-complete
 
 # 7. Inicia el servidor
-npm run dev
+pnpm run dev
 ```
 
 ### 🔧 Instalación Paso a Paso (Detallada)
@@ -172,32 +172,32 @@ psql -U postgres -d sena_bienes -f database_schema.sql
 **Opción A: Configuración automática (RECOMENDADO)**
 ```bash
 # Ejecuta todos los scripts en secuencia
-npm run setup-complete
+pnpm run setup-complete
 ```
 
 **Opción B: Configuración manual paso a paso**
 ```bash
 # Paso 1: Resetea la base de datos
-npm run reset-db
+pnpm run reset-db
 
 # Paso 2: Crea usuarios, roles y sedes
-npm run setup-basic
+pnpm run setup-basic
 
 # Paso 3: Crea inventario de prueba (100+ bienes)
-npm run create-inventory
+pnpm run create-inventory
 
 # Paso 4: Crea solicitudes de prueba con historial realista
-npm run create-requests
+pnpm run create-requests
 ```
 
 **6. Inicia el servidor:**
 ```bash
 # Desarrollo
-npm run dev
+pnpm run dev
 
 # Producción
-npm run build
-npm start
+pnpm run build
+pnpm start
 ```
 
 **7. Accede al sistema:**
@@ -208,31 +208,31 @@ npm start
 
 ### 🔨 Scripts de Desarrollo
 ```bash
-npm run dev          # Inicia servidor de desarrollo (http://localhost:3000)
-npm run build        # Construye la aplicación para producción
-npm run start        # Inicia servidor de producción
-npm run lint         # Ejecuta el linter para verificar código
+pnpm run dev          # Inicia servidor de desarrollo (http://localhost:3000)
+pnpm run build        # Construye la aplicación para producción
+pnpm run start        # Inicia servidor de producción
+pnpm run lint         # Ejecuta el linter para verificar código
 ```
 
 ### 🗄️ Scripts de Base de Datos (Optimizados)
 
 **Configuración Automática (RECOMENDADO):**
 ```bash
-npm run setup-complete   # 🎯 Configuración completa automática
-                        # Ejecuta: reset-db + setup-basic + create-inventory + create-requests
+pnpm run setup-complete   # 🎯 Configuración completa automática
+                         # Ejecuta: reset-db + setup-basic + create-inventory + create-requests
 ```
 
 **Configuración Manual (Paso a Paso):**
 ```bash
-npm run reset-db         # 1️⃣ Resetea base de datos y auto-increments
-npm run setup-basic      # 2️⃣ Crea usuarios, roles, sedes y ambientes
-npm run create-inventory # 3️⃣ Crea inventario de prueba (105+ bienes)
-npm run create-requests  # 4️⃣ Crea solicitudes con historial realista
+pnpm run reset-db         # 1️⃣ Resetea base de datos y auto-increments
+pnpm run setup-basic      # 2️⃣ Crea usuarios, roles, sedes y ambientes
+pnpm run create-inventory # 3️⃣ Crea inventario de prueba (105+ bienes)
+pnpm run create-requests  # 4️⃣ Crea solicitudes con historial realista
 ```
 
 ### 📊 Resultado de los Scripts
 
-Después de ejecutar `npm run setup-complete` tendrás:
+Después de ejecutar `pnpm run setup-complete` tendrás:
 
 - ✅ **21 usuarios de prueba** con credenciales secuenciales (100001-100021)
 - ✅ **3 sedes** (Pescadero, Calzado, Comuneros) con 3 ambientes cada una
@@ -462,9 +462,6 @@ Finalizando_Sena/
 - **`FLUJO_SISTEMA.md`** - Flujo detallado del sistema de solicitudes
 - **`database_schema.sql`** - Esquema completo de la base de datos
 - **`DOCUMENTACION_SCRIPTS.md`** - Documentación detallada de los scripts de configuración
-- **`CHANGELOG.md`** - Historial de cambios del proyecto
-- **`CHANGELOG_MEJORAS.md`** - Registro de mejoras implementadas
-- **`CHECKLIST_DEPLOYMENT.md`** - Lista de verificación para despliegue
 
 ## 🚀 Configuración de Producción
 

@@ -125,34 +125,34 @@ node scripts/4-create-test-requests.js
 ### **Opción 1: Configuración completa automática (RECOMENDADO):**
 ```bash
 # Ejecuta los 4 scripts en secuencia automáticamente
-npm run db:full-setup
+pnpm run setup-complete
 ```
 
 ### **Opción 2: Configuración manual paso a paso:**
 ```bash
 # PASO 1: Limpiar base de datos
-npm run db:reset
+pnpm run reset-db
 # O: node scripts/1-reset-database.js
 
 # PASO 2: Configurar datos básicos
-npm run db:setup
+pnpm run setup-basic
 # O: node scripts/2-setup-basic-data.js
 
 # PASO 3: Crear inventario de prueba
-npm run db:inventory
+pnpm run create-inventory
 # O: node scripts/3-create-test-inventory.js
 
 # PASO 4: Crear solicitudes de prueba
-npm run db:requests
+pnpm run create-requests
 # O: node scripts/4-create-test-requests.js
 ```
 
-### **Scripts npm disponibles:**
-- `npm run db:reset` - Ejecuta script 1 (reset database)
-- `npm run db:setup` - Ejecuta script 2 (setup basic data)
-- `npm run db:inventory` - Ejecuta script 3 (create inventory)
-- `npm run db:requests` - Ejecuta script 4 (create test requests)
-- `npm run db:full-setup` - Ejecuta los 4 scripts en secuencia
+### **Scripts disponibles:**
+- `pnpm run reset-db` - Ejecuta script 1 (reset database)
+- `pnpm run setup-basic` - Ejecuta script 2 (setup basic data)
+- `pnpm run create-inventory` - Ejecuta script 3 (create inventory)
+- `pnpm run create-requests` - Ejecuta script 4 (create test requests)
+- `pnpm run setup-complete` - Ejecuta los 4 scripts en secuencia
 
 **⚠️ IMPORTANTE:** Los scripts DEBEN ejecutarse en orden secuencial (1→2→3→4). Cada script depende del anterior.
 
@@ -248,15 +248,15 @@ git clone https://github.com/kevin101022/Finalizando_Sena.git
 cd Finalizando_Sena
 
 # 2. Instala dependencias
-npm install
+pnpm install
 
 # 3. Configura .env.local con tus credenciales PostgreSQL
 
 # 4. Configuración automática completa
-npm run setup-complete
+pnpm run setup-complete
 
 # 5. Inicia el servidor
-npm run dev
+pnpm run dev
 ```
 
 ### **Para pruebas rápidas:**
